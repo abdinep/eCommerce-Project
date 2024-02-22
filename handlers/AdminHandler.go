@@ -27,20 +27,20 @@ func List_user(c *gin.Context) {
 // ======================= Adding products to the DB ===============================
 func Add_Product(c *gin.Context) {
 	var product models.Product
-	var cat_id models.Categories
+	var cat_id models.Category
 	err := c.ShouldBindJSON(&product)
 	if err != nil {
 		c.JSON(501, "failed to bind json")
 	}
 	fmt.Println("============", product, "==================")
-	result := initializers.DB.First(&cat_id,  product.Category_id)
+	result := initializers.DB.First(&cat_id, product.Category_id)
 	fmt.Println("============", cat_id, "=====================")
 	if result.Error != nil {
 		c.JSON(404, "Category not found")
 	} else {
 
 		// product.Category_id = int(cat_id.ID)
-		fmt.Println("==============",product.Category_id,"==================")
+		fmt.Println("==============", product.Category_id, "==================")
 		upload := initializers.DB.Create(&product)
 		if upload.Error != nil {
 			c.JSON(501, "Product already exist")
@@ -55,7 +55,7 @@ func Add_Product(c *gin.Context) {
 //======================= Category Adding to the DB ================================
 
 func Category(c *gin.Context) {
-	var cat models.Categories
+	var cat models.Category
 	c.ShouldBindJSON(&cat)
 	upload := initializers.DB.Create(&cat)
 	if upload.Error != nil {
@@ -67,12 +67,66 @@ func Category(c *gin.Context) {
 
 //==================================== END ===========================================
 
+func View_Category(c *gin.Context) {
+	var View []models.Category
+	//  var checkcategory models.Categories
+	initializers.DB.Find(&View)
+
+	// initializers.DB.First(&checkcategory,"",View.Category_id)
+	for _, view := range View {
+		c.JSON(200, gin.H{
+			"ID":            view.ID,
+			"category Name": view.Name,
+			"Discription":   view.Description,
+			"status":        view.Status,
+		})
+	}
+}
+
+// ==================================== Editing Category ===========================================
+func Edit_Category(c *gin.Context) {
+	var edit models.Category
+	id := c.Param("ID")
+	result := initializers.DB.First(&edit, id)
+	fmt.Println("(===============", edit, "===========)(", id, "===================)")
+	if result.Error != nil {
+		c.JSON(501, "Category not found")
+	} else {
+		err := c.ShouldBindJSON(&edit)
+		if err != nil {
+			c.JSON(501, "failed to bind json")
+		}
+		save := initializers.DB.Save(&edit)
+		if save.Error != nil {
+			c.JSON(501, "Failed to update Category")
+		} else {
+			c.JSON(200, "Category updated successfully")
+		}
+	}
+}
+
+//==================================== END ===========================================
+//==================================== Deleting Categories ===========================================
+
+func Delete_Category(c *gin.Context) {
+	var delete models.Category
+	cat := c.Param("ID")
+	err := initializers.DB.First(&delete, cat)
+	if err.Error != nil {
+		c.JSON(501, "Category cant be deleted")
+	} else {
+		initializers.DB.Delete(&delete)
+		c.JSON(200, "Category Deleted")
+	}
+}
+
+//==================================== END ===========================================
+
 // ====================== Showing all products in admin page ==========================
 func View_Product(c *gin.Context) {
 	var View []models.Product
-//  var checkcategory models.Categories
-	initializers.DB.Joins("JOIN categories ON categories.id = products.Category_id ").Find(&View)
-	// initializers.DB.First(&checkcategory,"",View.Category_id)
+	//  var checkcategory models.Categories
+	initializers.DB.Where("deleted_at IS NULL").Preload("Category").Find(&View)
 	for _, view := range View {
 		c.JSON(200, gin.H{
 			"product ID":       view.ID,
@@ -80,7 +134,7 @@ func View_Product(c *gin.Context) {
 			"product quantity": view.Quantity,
 			"product price":    view.Price,
 			"product size":     view.Size,
-			"Category_id" : view.Category.Name,
+			"Category":         view.Category.Name,
 		})
 	}
 }

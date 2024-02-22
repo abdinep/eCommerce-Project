@@ -10,5 +10,5 @@ type Product struct {
 	Size         int        `json:"size"`
 	Description  string     `gorm:"not null" json:"description"`
 	Category_id  uint        `gorm:"not null" json:"category"`
-	Category     Categories 
+	Category     Category 
 }
