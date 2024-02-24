@@ -4,9 +4,12 @@ import (
 	"ecom/initializers"
 	"ecom/models"
 	"fmt"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
+
+var product models.Product
 
 // ====================== Display all user details in admin panel ====================================
 func List_user(c *gin.Context) {
@@ -26,7 +29,7 @@ func List_user(c *gin.Context) {
 
 // ======================= Adding products to the DB ===============================
 func Add_Product(c *gin.Context) {
-	var product models.Product
+
 	var cat_id models.Category
 	err := c.ShouldBindJSON(&product)
 	if err != nil {
@@ -40,17 +43,42 @@ func Add_Product(c *gin.Context) {
 	} else {
 
 		// product.Category_id = int(cat_id.ID)
-		fmt.Println("==============", product.Category_id, "==================")
-		upload := initializers.DB.Create(&product)
-		if upload.Error != nil {
-			c.JSON(501, "Product already exist")
-			return
-		}
-		c.JSON(200, "New Product Added")
+		// fmt.Println("==============", product.Category_id, "==================")
+
+		c.JSON(200, "Upload Product Images ")
 	}
 }
 
-//==================================== END =========================================
+// ==================================== END =========================================
+// ================================= Upload Product Image ===========================
+func ProductImage(c *gin.Context) {
+	file, err := c.MultipartForm()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, "Failed to fetch images")
+	}
+	files := file.File["images"]
+	var imagepaths []string
+
+	for _, val := range files {
+		filepath := "./images/" + val.Filename
+		if err = c.SaveUploadedFile(val, filepath); err != nil {
+			c.JSON(http.StatusBadRequest, "Failed to save images")
+		}
+		imagepaths = append(imagepaths, filepath)
+	}
+	product.ImagePath1 = imagepaths[0]
+	product.ImagePath2 = imagepaths[1]
+	product.ImagePath3 = imagepaths[2]
+	upload := initializers.DB.Create(&product)
+	if upload.Error != nil {
+		c.JSON(501, "Product already exist")
+		return
+	} else {
+		c.JSON(200, "Product added successfully")
+	}
+
+}
+// ==================================== END =========================================
 
 //======================= Category Adding to the DB ================================
 

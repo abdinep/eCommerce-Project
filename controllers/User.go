@@ -102,5 +102,31 @@ func Otpcheck(c *gin.Context) {
 		}
 	}
 }
+func Resend_Otp(c *gin.Context){
+	var check models.Otp
+	Otp = GenerateOtp()
+	err := SendOtp(Signup.Email, Otp)
+	if err != nil {
+		c.JSON(501, "Failed to sent otp")
+	}
+	result:=initializers.DB.First(&check, "email=?", Signup.Email)
+	if result.Error != nil {
+
+		check = models.Otp{
+			Email:     Signup.Email,
+			Otp:       Otp,
+			Expire_at: time.Now().Add(15 * time.Second),
+		}
+
+		initializers.DB.Create(&check)
+	} else {
+		initializers.DB.Model(&check).Where("email=?", Signup.Email).Updates(models.Otp{
+			Otp:       Otp,
+			Expire_at: time.Now().Add(15 * time.Second),
+		})
+	}
+	c.JSON(200, "OTP sent to your mail: "+Otp)
+
+}
 
 //============================= END =====================================
