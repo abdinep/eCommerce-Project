@@ -44,7 +44,10 @@ func main() {
 
 //========================= User registration with OTP =====================================
 	server.POST("/user_registration/otp", controllers.Otpcheck)
-
+	server.POST("/user_registration/resendotp",controllers.Resend_Otp)
+//========================= User product management ========================================
+	server.GET("/products",handlers.ProductLoadingPage)
+	server.GET("/products/details/:ID",handlers.ProductDetails)
 	server.Run(os.Getenv("PORT"))
 
 }

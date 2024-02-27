@@ -4,6 +4,7 @@ import (
 	"ecom/initializers"
 	"ecom/models"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -108,24 +109,32 @@ func Resend_Otp(c *gin.Context){
 	err := SendOtp(Signup.Email, Otp)
 	if err != nil {
 		c.JSON(501, "Failed to sent otp")
-	}
-	result:=initializers.DB.First(&check, "email=?", Signup.Email)
-	if result.Error != nil {
+	}else{
 
-		check = models.Otp{
-			Email:     Signup.Email,
-			Otp:       Otp,
-			Expire_at: time.Now().Add(15 * time.Second),
+		result:=initializers.DB.First(&check, "email=?", Signup.Email)
+		if result.Error != nil {
+	
+			check = models.Otp{
+				Email:     Signup.Email,
+				Otp:       Otp,
+				Expire_at: time.Now().Add(15 * time.Second),
+			}
+	
+			result:=initializers.DB.Create(&check)
+			if result.Error != nil{
+				c.JSON(http.StatusBadRequest,"Failed to save OTP")
+			}
+		} else {
+			err:=initializers.DB.Model(&check).Where("email=?", Signup.Email).Updates(models.Otp{
+				Otp:       Otp,
+				Expire_at: time.Now().Add(15 * time.Second),
+			})
+			if err.Error != nil{
+				c.JSON(http.StatusBadRequest,"Failed to update data")
+			}
 		}
-
-		initializers.DB.Create(&check)
-	} else {
-		initializers.DB.Model(&check).Where("email=?", Signup.Email).Updates(models.Otp{
-			Otp:       Otp,
-			Expire_at: time.Now().Add(15 * time.Second),
-		})
+		c.JSON(200, "OTP sent to your mail: "+Otp)
 	}
-	c.JSON(200, "OTP sent to your mail: "+Otp)
 
 }
 

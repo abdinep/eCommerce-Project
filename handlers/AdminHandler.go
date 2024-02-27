@@ -76,6 +76,7 @@ func ProductImage(c *gin.Context) {
 	} else {
 		c.JSON(200, "Product added successfully")
 	}
+	product = models.Product{}
 
 }
 // ==================================== END =========================================
@@ -163,6 +164,7 @@ func View_Product(c *gin.Context) {
 			"product price":    view.Price,
 			"product size":     view.Size,
 			"Category":         view.Category.Name,
+			"product image1":	view.ImagePath1,
 		})
 	}
 }
