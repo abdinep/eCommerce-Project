@@ -50,12 +50,14 @@ func ProductDetails(c *gin.Context){
 			"stock status": "Item is available",
 		})
 	}
+	
 	rating := Ratingcalc(productID,c)
 
 	c.JSON(http.StatusOK,gin.H{
 		"rating":rating,
 	})
-
+	ReviewView(productID,c)
+	
 	for _,value:=range load{
 		if product.Category_id == value.Category_id && product.Product_Name != value.Product_Name{
 			c.JSON(http.StatusOK,gin.H{
@@ -133,6 +135,7 @@ func ReviewView(id string, c *gin.Context){
 	var reviewView []models.Review
 	if err := initializers.DB.Joins("User").Find(&reviewView).Where("product_id=?",id); err.Error != nil{
 		c.JSON(http.StatusBadRequest,"failed to fetch reviews")
+		
 	}else{
 		productId,_:= strconv.Atoi(id)
 		for _, val := range reviewView{
@@ -142,8 +145,13 @@ func ReviewView(id string, c *gin.Context){
 					"review_date" : val.Time,
 					"review": val.Review,
 				})
+			}else{
+				c.JSON(http.StatusOK,gin.H{
+					"review" : "No review",
+				})
 			}
 		}
 	}
+	
 }
 //========================================= END ==================================================
