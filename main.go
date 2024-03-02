@@ -59,6 +59,12 @@ func main() {
 	server.POST("/products/rating",handlers.RatingStrore)
 	server.POST("/products/review",handlers.ReviewStore)
 
+	//========================== User Address management =======================================
+	
+	server.POST("/user/address",handlers.Add_Address)
+	server.GET("/user/address/:ID",handlers.View_Address)
+	server.PATCH("/user/address/:ID",handlers.Edit_Address)
+	server.DELETE("/user/address/:ID",handlers.Delete_Address)
 	//============================== Oauth =====================================================
 
 	server.GET("/auth/google",controllers.Googlelogin)

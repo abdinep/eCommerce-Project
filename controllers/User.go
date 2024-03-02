@@ -65,14 +65,14 @@ func Usersignup(c *gin.Context) {
 		check = models.Otp{
 			Email:     Signup.Email,
 			Otp:       Otp,
-			Expire_at: time.Now().Add(15 * time.Second),
+			Expire_at: time.Now().Add(60 * time.Second),
 		}
 
 		initializers.DB.Create(&check)
 	} else {
 		initializers.DB.Model(&check).Where("email=?", Signup.Email).Updates(models.Otp{
 			Otp:       Otp,
-			Expire_at: time.Now().Add(15 * time.Second),
+			Expire_at: time.Now().Add(60 * time.Second),
 		})
 	}
 	// initializers.DB.Delete(&check)

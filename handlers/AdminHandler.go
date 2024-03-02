@@ -21,6 +21,7 @@ func List_user(c *gin.Context) {
 			"User":   data.Name,
 			"Email":  data.Email,
 			"Mobile": data.Mobile,
+			"status" : data.Status,
 		})
 	}
 }
@@ -41,9 +42,6 @@ func Add_Product(c *gin.Context) {
 	if result.Error != nil {
 		c.JSON(404, "Category not found")
 	} else {
-
-		// product.Category_id = int(cat_id.ID)
-		// fmt.Println("==============", product.Category_id, "==================")
 
 		c.JSON(200, "Upload Product Images ")
 	}
@@ -178,16 +176,16 @@ func Edit_User(c *gin.Context) {
 	result := initializers.DB.First(&edit, user)
 	fmt.Println("(===============", edit, "===========)(", user, "===================)")
 	if result.Error != nil {
-		c.JSON(501, "User not found")
+		c.JSON(500, "User not found")
 	} else {
 
 		err := c.ShouldBindJSON(&edit)
 		if err != nil {
-			c.JSON(501, "Failed to bind json")
+			c.JSON(500, "Failed to bind json")
 		}
 		error := initializers.DB.Save(&edit)
 		if error.Error != nil {
-			c.JSON(501, "failed to update user")
+			c.JSON(500, "failed to update user")
 		} else {
 			c.JSON(200, "User updated successfully")
 		}
