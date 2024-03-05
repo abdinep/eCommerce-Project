@@ -12,5 +12,5 @@ type Address struct {
 	Phone   int    `json:"user_phone"`
 	Type    string `json:"address_type"`
 	UserId  int    `json:"user_id"`
-	user    User
+	User    User
 }

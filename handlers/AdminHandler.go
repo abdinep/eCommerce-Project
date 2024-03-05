@@ -21,7 +21,7 @@ func List_user(c *gin.Context) {
 			"User":   data.Name,
 			"Email":  data.Email,
 			"Mobile": data.Mobile,
-			"status" : data.Status,
+			"status": data.Status,
 		})
 	}
 }
@@ -77,6 +77,7 @@ func ProductImage(c *gin.Context) {
 	product = models.Product{}
 
 }
+
 // ==================================== END =========================================
 
 //======================= Category Adding to the DB ================================
@@ -162,7 +163,7 @@ func View_Product(c *gin.Context) {
 			"product price":    view.Price,
 			"product size":     view.Size,
 			"Category":         view.Category.Name,
-			"product image1":	view.ImagePath1,
+			"product image1":   view.ImagePath1,
 		})
 	}
 }

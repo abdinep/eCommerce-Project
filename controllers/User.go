@@ -14,8 +14,7 @@ import (
 
 var Signup models.User
 var Otp string
-
-// ============================== User login Verification =============================================
+// ============================== User Authentication =============================================
 func Userlogin(c *gin.Context) {
 	var form models.User
 	var table models.User
@@ -125,7 +124,7 @@ func Resend_Otp(c *gin.Context){
 				c.JSON(http.StatusBadRequest,"Failed to save OTP")
 			}
 		} else {
-			err:=initializers.DB.Model(&check).Where("email=?", Signup.Email).Updates(models.Otp{
+			err :=initializers.DB.Model(&check).Where("email=?", Signup.Email).Updates(models.Otp{
 				Otp:       Otp,
 				Expire_at: time.Now().Add(15 * time.Second),
 			})

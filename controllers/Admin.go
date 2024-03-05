@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
-//=============================== Admin login ========================
+//=============================== Admin login & logout ========================
 func Login(c *gin.Context) {
 	var log models.Admin
 	err := c.ShouldBindJSON(&log)

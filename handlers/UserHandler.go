@@ -4,6 +4,7 @@ import (
 	"ecom/initializers"
 	"ecom/models"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -17,6 +18,7 @@ func ProductLoadingPage(c *gin.Context) {
 
 	if err := initializers.DB.Joins("Category").Find(&load); err.Error != nil {
 		c.JSON(http.StatusBadRequest, "Failed to fetch product data")
+		return
 	}
 	for _, view := range load {
 		fmt.Println("products", view.ID, "===>", view.Product_Name, "===>", view.ImagePath1, "===>")
@@ -27,6 +29,7 @@ func ProductLoadingPage(c *gin.Context) {
 		})
 	}
 }
+
 func ProductDetails(c *gin.Context) {
 	var product models.Product
 	productID := c.Param("ID")
@@ -169,17 +172,70 @@ func Add_Address(c *gin.Context) {
 		c.JSON(http.StatusOK, "New Address added")
 	}
 }
+func Edit_Address(c *gin.Context) {
+	var address models.Address
+	id := c.Param("ID")
+	if err := initializers.DB.First(&address, id); err.Error != nil {
+		c.JSON(500, "Failed to fetch address")
+	} else {
+		if err := c.ShouldBindJSON(&address); err != nil {
+			c.JSON(500, "failed to bind address")
+			return
+		}
+		if err := initializers.DB.Save(&address); err.Error != nil {
+			c.JSON(500, "failed to edit address")
+		} else {
+			c.JSON(200, "Updated Address")
+		}
+	}
+
+}
+func Delete_Address(c *gin.Context) {
+	var address models.Address
+	id := c.Param("ID")
+	if err := initializers.DB.First(&address, id); err.Error != nil {
+		c.JSON(500, "failed to fetch data")
+	} else {
+		if err := initializers.DB.Delete(&address); err.Error != nil {
+			c.JSON(500, "Address cant be deleted")
+		} else {
+			c.JSON(200, "Address Deleted successfully")
+		}
+	}
+
+}
+
+// ========================================= END ==================================================
+// =================================== User Profile ===============================================
+func User_Details(c *gin.Context) {
+	var details models.User
+	id := c.Param("ID")
+	if err := initializers.DB.First(&details, id); err.Error != nil {
+		c.JSON(500, "Failed to fetch data")
+		log.Fatal("Error", err.Error)
+	} else {
+		c.JSON(200, gin.H{
+			"user_name":   details.Name,
+			"user_email":  details.Email,
+			"user_mobile": details.Mobile,
+			"user_gender": details.Gender,
+			"user_status": details.Status,
+			// "user_address" : details.
+
+		})
+	}
+}
 func View_Address(c *gin.Context) {
 	var address []models.Address
 	id := c.Param("ID")
-	if err := initializers.DB.Find(&address).Where("UserId = ?",id); err.Error != nil {
+	if err := initializers.DB.Find(&address).Where("UserId = ?", id); err.Error != nil {
 		c.JSON(500, "Failed to find address")
-		fmt.Println(err.Error,address)
+		fmt.Println(err.Error, address)
 	} else {
 		for _, view := range address {
 			c.JSON(http.StatusOK, gin.H{
 				"Address_Type": view.Type,
-				"Address_ID": view.ID,
+				"Address_ID":   view.ID,
 				"User_Address": view.Address,
 				"User_City":    view.City,
 				"User_State":   view.State,
@@ -189,37 +245,7 @@ func View_Address(c *gin.Context) {
 			})
 		}
 	}
-
 }
-func Edit_Address(c *gin.Context){
-	var address models.Address
-	id := c.Param("ID")
-	if err := initializers.DB.First(&address,id); err.Error != nil{
-		c.JSON(500,"Failed to fetch address")
-	}else{
-		if err := c.ShouldBindJSON(&address); err != nil{
-			c.JSON(500,"failed to bind address")
-			return
-		}
-		if err := initializers.DB.Save(&address); err.Error != nil{
-			c.JSON(500,"failed to edit address")
-		}else{
-			c.JSON(200,"Updated Address")
-		}
-	}
 
-}
-func Delete_Address(c *gin.Context){
-	var address models.Address
-	id := c.Param("ID")
-	if err := initializers.DB.First(&address,id); err.Error != nil{
-		c.JSON(500,"failed to fetch data")
-	}else{
-		if err := initializers.DB.Delete(&address); err.Error != nil{
-			c.JSON(500,"Address cant be deleted")
-		}else{
-			c.JSON(200,"Address Deleted successfully")
-		}
-	}
-
-}
+// ========================================= END ==================================================
+// ============================== Cart management =============================================

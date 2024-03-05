@@ -24,6 +24,9 @@ func main() {
 	server.POST("/admin_login", controllers.Login)
 	server.POST("/user_registration", controllers.Usersignup)
 	server.POST("/user_signin", controllers.Userlogin)
+	server.POST("/forgotpass/sendOTP",controllers.ForgotPassword_OTP)
+	server.POST("/forgotpass/checkOTP",controllers.Forgot_Pass_OTP_Check)
+	server.POST("/forgotPassword",controllers.ForgotPassword_Change)
 
 	//=========================== Admin user management ======================================
 
@@ -65,6 +68,14 @@ func main() {
 	server.GET("/user/address/:ID",handlers.View_Address)
 	server.PATCH("/user/address/:ID",handlers.Edit_Address)
 	server.DELETE("/user/address/:ID",handlers.Delete_Address)
+
+	//========================== User Cart management ==========================================
+
+	server.POST("/cart/:ID",handlers.Add_Cart)
+	server.GET("/cart/:ID",handlers.View_Cart)
+	//========================== User Profile ==================================================
+
+	server.GET("/user/profile/:ID",handlers.User_Details)
 	//============================== Oauth =====================================================
 
 	server.GET("/auth/google",controllers.Googlelogin)
