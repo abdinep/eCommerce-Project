@@ -2,43 +2,67 @@ package controllers
 
 import (
 	"ecom/initializers"
+	"ecom/middleware"
 	"ecom/models"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
 
 var Signup models.User
 var Otp string
+var Role = "user"
 // ============================== User Authentication =============================================
 func Userlogin(c *gin.Context) {
 	var form models.User
 	var table models.User
-	err := c.ShouldBindJSON(&form)
-	if err != nil {
-		c.JSON(501, "failed to bind json")
-	}
-	initializers.DB.First(&table, "email=?", strings.ToLower(form.Email))
-	fmt.Println("(=======================", table, ")(====================", form.Email, "==============)")
+	session := sessions.Default(c)
+	check := session.Get(Role)
+	if check != nil{
+		c.JSON(200,"Already Loged in")
+	}else{
 
-	err = bcrypt.CompareHashAndPassword([]byte(table.Password), []byte(form.Password))
-	if err != nil {
-		c.JSON(501, "invalid user name or password")
-	} else {
-		if table.Status == "Active" {
-			c.JSON(200, "Welcome to Home page")
+		err := c.ShouldBindJSON(&form)
+		if err != nil {
+			c.JSON(501, "failed to bind json")
+		}
+		initializers.DB.First(&table, "email=?", strings.ToLower(form.Email))
+		fmt.Println("(=======================", table, ")(====================", form.Email, "==============)")
+	
+		err = bcrypt.CompareHashAndPassword([]byte(table.Password), []byte(form.Password))
+		if err != nil {
+			c.JSON(501, "invalid user name or password")
 		} else {
-			c.JSON(200, "User Blocked")
+			if table.Status == "Active" {
+				middleware.SessionCreate(form.Email,Role,c)
+				c.JSON(200, "Welcome to Home page")
+			} else {
+				c.JSON(200, "User Blocked")
+			}
 		}
 	}
 
+
 }
 
-//=============================== END ====================================
+//=============================== END ===============================================
+
+func User_Logout(c *gin.Context){
+	session := sessions.Default(c)
+	check := session.Get("user")
+	if check == nil{
+		c.JSON(200,"Not Logged in")
+	}else{
+		session.Delete("user")
+		session.Save()
+		c.JSON(200,"Loged out")
+	}
+}
 
 // ========================= Sending OTP by clicking Signup =========================
 func Usersignup(c *gin.Context) {
@@ -101,6 +125,7 @@ func Otpcheck(c *gin.Context) {
 			c.JSON(200, "Successfully signed up")
 		}
 	}
+	Signup = models.User{}
 }
 func Resend_Otp(c *gin.Context){
 	var check models.Otp

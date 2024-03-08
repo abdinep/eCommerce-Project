@@ -7,7 +7,7 @@ import (
 //======================================= creating tables on DB 
 func TableCreate() {
 	err := DB.AutoMigrate(&models.User{}, &models.Admin{}, &models.Product{}, &models.Otp{},&models.Category{},
-		&models.Rating{},&models.Review{},&models.Address{},&models.Cart{})
+		&models.Rating{},&models.Review{},&models.Address{},&models.Cart{},&models.Coupon{},&models.Order{})
 	if err != nil {
 		log.Fatal("Failed to Automigrate", err)
 	}

@@ -251,3 +251,41 @@ func Status(c *gin.Context) {
 }
 
 //=================================== END =====================================
+//============================= Coupon Management =============================
+
+func Coupon(c *gin.Context) {
+	var coupon models.Coupon
+	if err := c.ShouldBindJSON(&coupon); err != nil {
+		c.JSON(500, "Failed to fetch data")
+	} else {
+		if err := initializers.DB.Create(&coupon); err.Error != nil {
+			c.JSON(500, "Coupon already exist")
+			fmt.Println("Coupon already exist", err.Error)
+		} else {
+			c.JSON(200, "New Coupon added")
+		}
+	}
+}
+
+// ================================== END =======================================
+// ========================== Order management ==================================
+func Admin_View_order(c *gin.Context) {
+	var order []models.Order
+
+	if err := initializers.DB.Joins("Product").Find(&order); err.Error != nil {
+		c.JSON(500, "Failed to fetch order")
+		return
+	}
+	for _, view := range order {
+		c.JSON(200, gin.H{
+			"Order_ID":         view.ID,
+			"user_id":          view.UserID,
+			"Product_Name":     view.Product.Product_Name,
+			"Selected_Address": view.AddressID,
+			"Applied_Coupon":   view.Coupon_Code,
+			"Order_Quantity":   view.Order_Quantity,
+			"Order_Price":      view.Order_Price,
+			"Payment_Method":   view.Order_Payment,
+		})
+	}
+}
