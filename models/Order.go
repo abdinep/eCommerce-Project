@@ -15,5 +15,5 @@ type Order struct {
 	Order_Price    int
 	Order_Payment  string `json:"order_payment"`
 	Order_Date     time.Time
-	Order_status   string
+	Order_status   string `json:"status"`
 }

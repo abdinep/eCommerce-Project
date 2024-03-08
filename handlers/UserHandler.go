@@ -237,7 +237,7 @@ func Edit_Profile(c *gin.Context) {
 		}
 		if err := initializers.DB.Save(&edit); err.Error != nil {
 			c.JSON(500, "failed to edit details")
-			fmt.Println("failed to edit details",err.Error)
+			fmt.Println("failed to edit details", err.Error)
 		} else {
 			c.JSON(200, "Updated Profile details")
 		}
@@ -253,7 +253,7 @@ func View_Address(c *gin.Context) {
 	} else {
 		userID, _ := strconv.Atoi(id)
 		for _, view := range address {
-			if view.UserId == userID{
+			if view.UserId == userID {
 
 				c.JSON(http.StatusOK, gin.H{
 					"Address_Type": view.Type,
@@ -269,58 +269,61 @@ func View_Address(c *gin.Context) {
 		}
 	}
 }
-func View_Orders(c *gin.Context){
+func View_Orders(c *gin.Context) {
 	var order []models.Order
-	
+
 	userID := c.Param("ID")
-	if err := initializers.DB.Joins("Product").Where("user_id = ?",userID).Find(&order); err.Error != nil{
-		c.JSON(500,"Currently no Orders")
-		fmt.Println("Currently no Orders========>",err.Error)
-		
-	}else{
+	if err := initializers.DB.Joins("Product").Where("user_id = ?", userID).Find(&order); err.Error != nil {
+		c.JSON(500, "Currently no Orders")
+		fmt.Println("Currently no Orders========>", err.Error)
+
+	} else {
 		count := 0
-		for _,view := range order{
-			c.JSON(200,gin.H{
-				"Order_ID": view.ID,
-				"Product_Name": view.Product.Product_Name,
+		for _, view := range order {
+			c.JSON(200, gin.H{
+				"Order_ID":         view.ID,
+				"Product_Name":     view.Product.Product_Name,
 				"Selected_Address": view.AddressID,
-				"Applied_Coupon": view.Coupon_Code,
-				"Order_Quantity": view.Order_Quantity,
-				"Order_Price": view.Order_Price,
-				"Payment_Method": view.Order_Payment, 
+				"Applied_Coupon":   view.Coupon_Code,
+				"Order_Quantity":   view.Order_Quantity,
+				"Order_Price":      view.Order_Price,
+				"Payment_Method":   view.Order_Payment,
+				"order_status":     view.Order_status,
 			})
 			count += 1
 		}
-		c.JSON(200,gin.H{
+		c.JSON(200, gin.H{
 			"No.Order": count,
 		})
 	}
 }
-func Cancel_Orders(c *gin.Context){
+func Cancel_Orders(c *gin.Context) {
 	var order models.Order
 	var cancel models.Order
 	var quantity models.Product
 	userid := c.Param("ID")
-	if err := c.ShouldBindJSON(&order); err != nil{
-		c.JSON(500,"Failed to bind ")
+	if err := c.ShouldBindJSON(&order); err != nil {
+		c.JSON(500, "Failed to bind ")
 		return
 	}
 
-	initializers.DB.Where("product_id = ?",order.ProductID).First(&quantity)
+	initializers.DB.Where("product_id = ?", order.ProductID).First(&quantity)
 
-	if err := initializers.DB.Where("user_id = ? AND product_id = ?",userid,order.ProductID).First(&cancel); err.Error != nil{
-		c.JSON(500,"Order not exist")
-		fmt.Println("Order not exist",err.Error)
-	}else{
-		if err := initializers.DB.Save(&cancel); err.Error != nil{
-			c.JSON(500,"Failed to cancel your order")
-			fmt.Println("Failed to cancel your order",err.Error)
-		}else{
-			c.JSON(200,"Order canceled successfully")
+	if err := initializers.DB.Where("user_id = ? AND product_id = ?", userid, order.ProductID).First(&cancel); err.Error != nil {
+		c.JSON(500, "Order not exist")
+		fmt.Println("Order not exist", err.Error)
+	} else {
+		cancel.Order_status = "Order Canceled"
+		if err := initializers.DB.Save(&cancel); err.Error != nil {
+			c.JSON(500, "Failed to cancel your order")
+			fmt.Println("Failed to cancel your order", err.Error)
+		} else {
+			c.JSON(200, "Order canceled successfully")
 			quantity.Quantity += cancel.Order_Quantity
 			initializers.DB.Save(&quantity)
-			fmt.Println("++++++++++",quantity.Quantity,cancel.Order_Quantity,"+++++++++++")
+			fmt.Println("++++++++++", quantity.Quantity, cancel.Order_Quantity, "+++++++++++")
 		}
 	}
 }
+
 // ========================================= END ==================================================

@@ -286,6 +286,25 @@ func Admin_View_order(c *gin.Context) {
 			"Order_Quantity":   view.Order_Quantity,
 			"Order_Price":      view.Order_Price,
 			"Payment_Method":   view.Order_Payment,
+			"Order_status":     view.Order_status,
 		})
 	}
+}
+func Change_Order_Status(c *gin.Context) {
+	var order models.Order
+	var update models.Order
+	orderid := c.Param("ID")
+	if err := c.ShouldBindJSON(&order); err != nil {
+		c.JSON(500, "Add status ")
+		return
+	}
+	if err := initializers.DB.First(&update,orderid); err.Error != nil{
+		c.JSON(500,"Order not found")
+		fmt.Println("Order not found======>",err.Error)
+		return
+	}
+	fmt.Println("++++=====+++===",order.Order_status)
+	update.Order_status = order.Order_status
+	initializers.DB.Save(&update)
+	c.JSON(200,"Order status changed")
 }
