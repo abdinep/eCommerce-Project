@@ -53,7 +53,6 @@ func SeaechProduct(c *gin.Context) {
 			c.JSON(200, gin.H{
 				"Name":     v.Product_Name,
 				"Price":    v.Price,
-				"Category": v.Category.Name,
 				"ID":       v.ID,
 			})
 		}

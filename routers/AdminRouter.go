@@ -11,6 +11,7 @@ var roleAdmin = "admin"
 func AdminGroup(r *gin.RouterGroup) {
 
 	r.POST("/login", controllers.Login)
+	r.GET("/logout",controllers.Admin_Logout)
 	//=========================== Admin user management ======================================
 
 	r.GET("/usermanagement",middleware.AuthMiddleware(roleAdmin), handlers.List_user)

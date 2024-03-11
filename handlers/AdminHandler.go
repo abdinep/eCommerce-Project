@@ -164,6 +164,7 @@ func View_Product(c *gin.Context) {
 			"product size":     view.Size,
 			"Category":         view.Category.Name,
 			"product image1":   view.ImagePath1,
+			"Stock":            view.Quantity,
 		})
 	}
 }
@@ -298,13 +299,13 @@ func Change_Order_Status(c *gin.Context) {
 		c.JSON(500, "Add status ")
 		return
 	}
-	if err := initializers.DB.First(&update,orderid); err.Error != nil{
-		c.JSON(500,"Order not found")
-		fmt.Println("Order not found======>",err.Error)
+	if err := initializers.DB.First(&update, orderid); err.Error != nil {
+		c.JSON(500, "Order not found")
+		fmt.Println("Order not found======>", err.Error)
 		return
 	}
-	fmt.Println("++++=====+++===",order.Order_status)
+	fmt.Println("========>", order.Order_status)
 	update.Order_status = order.Order_status
 	initializers.DB.Save(&update)
-	c.JSON(200,"Order status changed")
+	c.JSON(200, "Order status changed")
 }

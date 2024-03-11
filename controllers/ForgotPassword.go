@@ -84,4 +84,5 @@ func ForgotPassword_Change(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusUnauthorized, "Please verify your Email")
 	}
+	flag = false
 }

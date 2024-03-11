@@ -319,7 +319,7 @@ func Cancel_Orders(c *gin.Context) {
 			fmt.Println("Failed to cancel your order", err.Error)
 		} else {
 			c.JSON(200, "Order canceled successfully")
-			quantity.Quantity += cancel.Order_Quantity
+			quantity.Quantity = quantity.Quantity + cancel.Order_Quantity
 			initializers.DB.Save(&quantity)
 			fmt.Println("++++++++++", quantity.Quantity, cancel.Order_Quantity, "+++++++++++")
 		}
