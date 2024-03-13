@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"ecom/initializers"
+	"ecom/middleware"
 	"ecom/models"
 	"fmt"
 	"net/http"
@@ -131,6 +132,7 @@ func ReviewStore(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, "failed to bind data")
 	} else {
 		reviewstore.Time = time.Now().Format("2006-01-02")
+		reviewstore.UserId = c.GetInt("userID")
 		if err := initializers.DB.Create(&reviewstore); err.Error != nil {
 			c.JSON(http.StatusBadRequest, "failed to store review")
 		} else {
@@ -165,6 +167,7 @@ func Add_Address(c *gin.Context) {
 	if err := c.ShouldBindJSON(&address); err != nil {
 		c.JSON(500, "failed to fetch data")
 	}
+	address.UserId = int(c.GetUint("userID"))
 	if err := initializers.DB.Create(&address); err.Error != nil {
 		c.JSON(500, "Existing Address")
 	} else {
@@ -208,8 +211,8 @@ func Delete_Address(c *gin.Context) {
 // =================================== User Profile ===============================================
 func User_Details(c *gin.Context) {
 	var details models.User
-	id := c.Param("ID")
-	if err := initializers.DB.First(&details, id); err.Error != nil {
+	// id := c.Param("ID")
+	if err := initializers.DB.First(&details, middleware.UserDetails.ID); err.Error != nil {
 		c.JSON(500, "Failed to fetch data")
 		fmt.Println("Error", err.Error)
 	} else {
@@ -226,7 +229,7 @@ func User_Details(c *gin.Context) {
 }
 func Edit_Profile(c *gin.Context) {
 	var edit models.User
-	id := c.Param("ID")
+	id := c.GetUint("userID")
 	if err := initializers.DB.First(&edit, id); err.Error != nil {
 		c.JSON(500, "Failed to fetch data from DB")
 		fmt.Println("Failed to fetch data from DB=====>", err.Error)
@@ -246,14 +249,13 @@ func Edit_Profile(c *gin.Context) {
 }
 func View_Address(c *gin.Context) {
 	var address []models.Address
-	id := c.Param("ID")
-	if err := initializers.DB.Find(&address).Where("UserId = ?", id); err.Error != nil {
+	userID := c.GetUint("userID")
+	if err := initializers.DB.Find(&address).Where("UserId = ?", userID); err.Error != nil {
 		c.JSON(500, "Failed to find address")
 		fmt.Println(err.Error, address)
 	} else {
-		userID, _ := strconv.Atoi(id)
 		for _, view := range address {
-			if view.UserId == userID {
+			if view.UserId == int(userID) {
 
 				c.JSON(http.StatusOK, gin.H{
 					"Address_Type": view.Type,
@@ -272,7 +274,7 @@ func View_Address(c *gin.Context) {
 func View_Orders(c *gin.Context) {
 	var order []models.Order
 
-	userID := c.Param("ID")
+	userID := c.GetUint("userID")
 	if err := initializers.DB.Joins("Product").Where("user_id = ?", userID).Find(&order); err.Error != nil {
 		c.JSON(500, "Currently no Orders")
 		fmt.Println("Currently no Orders========>", err.Error)
@@ -301,7 +303,7 @@ func Cancel_Orders(c *gin.Context) {
 	var order models.Order
 	var cancel models.Order
 	var quantity models.Product
-	userid := c.Param("ID")
+	userid := c.GetUint("userID")
 	if err := c.ShouldBindJSON(&order); err != nil {
 		c.JSON(500, "Failed to bind ")
 		return

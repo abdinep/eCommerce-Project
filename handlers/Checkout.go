@@ -4,7 +4,6 @@ import (
 	"ecom/initializers"
 	"ecom/models"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -17,7 +16,7 @@ func Checkout(c *gin.Context) {
 	var address models.Address
 	var Grandtotal int
 
-	userid := c.Param("ID")
+	userid := c.GetUint("userID")
 	if err := c.ShouldBindJSON(&order); err != nil {
 		c.JSON(500, "failed to fetch data")
 	}
@@ -43,7 +42,7 @@ func Checkout(c *gin.Context) {
 		return
 	}
 
-	id, _ := strconv.Atoi(userid)
+	// id, _ := strconv.Atoi(userid)
 	count := 1
 	for _, view := range cart {
 
@@ -72,7 +71,7 @@ func Checkout(c *gin.Context) {
 
 		order.Order_Price = quantity_price
 		order = models.Order{
-			UserID:         id,
+			UserID:         int(userid),
 			Order_Payment:  order.Order_Payment,
 			AddressID:      order.AddressID,
 			ProductID:      view.Product_Id,
@@ -80,7 +79,7 @@ func Checkout(c *gin.Context) {
 			Coupon_Code:    coup,
 			Order_Price:    order.Order_Price,
 			Order_Date:     time.Now(),
-			Order_status: "Pending",
+			Order_status:   "Pending",
 		}
 
 		if err := initializers.DB.Create(&order); err.Error != nil {

@@ -61,7 +61,7 @@ func Forgot_Pass_OTP_Check(c *gin.Context) {
 
 func ForgotPassword_Change(c *gin.Context) {
 
-	if flag == true {
+	if flag {
 
 		if err := c.ShouldBindJSON(&pass); err != nil {
 			c.JSON(500, "Failed to bind data")
