@@ -270,42 +270,42 @@ func Coupon(c *gin.Context) {
 
 // ================================== END =======================================
 // ========================== Order management ==================================
-func Admin_View_order(c *gin.Context) {
-	var order []models.Order
+// func Admin_View_order(c *gin.Context) {
+// 	var order []models.Order
 
-	if err := initializers.DB.Joins("Product").Find(&order); err.Error != nil {
-		c.JSON(500, "Failed to fetch order")
-		return
-	}
-	for _, view := range order {
-		c.JSON(200, gin.H{
-			"Order_ID":         view.ID,
-			"user_id":          view.UserID,
-			"Product_Name":     view.Product.Product_Name,
-			"Selected_Address": view.AddressID,
-			"Applied_Coupon":   view.Coupon_Code,
-			"Order_Quantity":   view.Order_Quantity,
-			"Order_Price":      view.Order_Price,
-			"Payment_Method":   view.Order_Payment,
-			"Order_status":     view.Order_status,
-		})
-	}
-}
-func Change_Order_Status(c *gin.Context) {
-	var order models.Order
-	var update models.Order
-	orderid := c.Param("ID")
-	if err := c.ShouldBindJSON(&order); err != nil {
-		c.JSON(500, "Add status ")
-		return
-	}
-	if err := initializers.DB.First(&update, orderid); err.Error != nil {
-		c.JSON(500, "Order not found")
-		fmt.Println("Order not found======>", err.Error)
-		return
-	}
-	fmt.Println("========>", order.Order_status)
-	update.Order_status = order.Order_status
-	initializers.DB.Save(&update)
-	c.JSON(200, "Order status changed")
-}
+// 	if err := initializers.DB.Joins("OrderItem").Find(&order); err.Error != nil {
+// 		c.JSON(500, "Failed to fetch order")
+// 		return
+// 	}
+// 	for _, view := range order {
+// 		c.JSON(200, gin.H{
+// 			"Order_ID":         view.ID,
+// 			"user_id":          view.UserID,
+// 			"Product_Name":     view.Product.Product_Name,
+// 			"Selected_Address": view.AddressID,
+// 			"Applied_Coupon":   view.Coupon_Code,
+// 			"Order_Quantity":   view.Order_Quantity,
+// 			"Order_Price":      view.OrderPrice,
+// 			"Payment_Method":   view.OrderPayment,
+// 			"Order_status":     view.Orderstatus,
+// 		})
+// 	}
+// }
+// func Change_Order_Status(c *gin.Context) {
+// 	var order models.Order
+// 	var update models.Order
+// 	orderid := c.Param("ID")
+// 	if err := c.ShouldBindJSON(&order); err != nil {
+// 		c.JSON(500, "Add status ")
+// 		return
+// 	}
+// 	if err := initializers.DB.First(&update, orderid); err.Error != nil {
+// 		c.JSON(500, "Order not found")
+// 		fmt.Println("Order not found======>", err.Error)
+// 		return
+// 	}
+// 	fmt.Println("========>", order.Orderstatus)
+// 	update.Orderstatus = order.Orderstatus
+// 	initializers.DB.Save(&update)
+// 	c.JSON(200, "Order status changed")
+// }

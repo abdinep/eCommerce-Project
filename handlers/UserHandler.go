@@ -273,57 +273,103 @@ func View_Address(c *gin.Context) {
 }
 func View_Orders(c *gin.Context) {
 	var order []models.Order
-
+	var count = 0
 	userID := c.GetUint("userID")
-	if err := initializers.DB.Joins("Product").Where("user_id = ?", userID).Find(&order); err.Error != nil {
-		c.JSON(500, "Currently no Orders")
-		fmt.Println("Currently no Orders========>", err.Error)
-
-	} else {
-		count := 0
-		for _, view := range order {
-			c.JSON(200, gin.H{
-				"Order_ID":         view.ID,
-				"Product_Name":     view.Product.Product_Name,
-				"Selected_Address": view.AddressID,
-				"Applied_Coupon":   view.Coupon_Code,
-				"Order_Quantity":   view.Order_Quantity,
-				"Order_Price":      view.Order_Price,
-				"Payment_Method":   view.Order_Payment,
-				"order_status":     view.Order_status,
-			})
-			count += 1
-		}
-		c.JSON(200, gin.H{
-			"No.Order": count,
-		})
-	}
-}
-func Cancel_Orders(c *gin.Context) {
-	var order models.Order
-	var cancel models.Order
-	var quantity models.Product
-	userid := c.GetUint("userID")
-	if err := c.ShouldBindJSON(&order); err != nil {
-		c.JSON(500, "Failed to bind ")
+	if err := initializers.DB.Where("user_id = ?", userID).Find(&order); err.Error != nil {
+		c.JSON(500, "Failed to fetch order data")
+		fmt.Println("Failed to fetch order data=====>", err.Error)
 		return
 	}
+	for _, view := range order {
+		c.JSON(200, gin.H{
+			"OrderID":       view.ID,
+			"AddressID":     view.AddressID,
+			"CouponCode":    view.CouponCode,
+			"OrderPrice":    view.OrderPrice,
+			"PaymentMethod": view.OrderPayment,
+			"OrderDate":     view.OrderDate,
+		})
+		count += 1
+	}
+	c.JSON(200, gin.H{
+		"No.Order": count,
+	})
+}
+func View_Order_Details(c *gin.Context) {
+	var orderitems []models.OrderItem
+	var GrandTotal int
+	OrderID := c.Param("ID")
 
-	initializers.DB.Where("product_id = ?", order.ProductID).First(&quantity)
-
-	if err := initializers.DB.Where("user_id = ? AND product_id = ?", userid, order.ProductID).First(&cancel); err.Error != nil {
-		c.JSON(500, "Order not exist")
-		fmt.Println("Order not exist", err.Error)
+	if err := initializers.DB.Where("order_id = ?", OrderID).Preload("Product").Preload("Order").Find(&orderitems); err.Error != nil {
+		c.JSON(500, "Failed to fetch data")
+		fmt.Println("Failed to fetch data=====>", err.Error)
 	} else {
-		cancel.Order_status = "Order Canceled"
-		if err := initializers.DB.Save(&cancel); err.Error != nil {
-			c.JSON(500, "Failed to cancel your order")
-			fmt.Println("Failed to cancel your order", err.Error)
+		count := 0
+		for _, view := range orderitems {
+			subTotal := view.OrderQuantity * view.Product.Price
+			c.JSON(200, gin.H{
+				"OrderID":         view.OrderID,
+				"OrderItemsID":    view.ID,
+				"ProductName":     view.Product.Product_Name,
+				"SelectedAddress": view.Order.AddressID,
+				"AppliedCoupon":   view.Order.CouponCode,
+				"OrderQuantity":   view.OrderQuantity,
+				"OrderPrice":      subTotal,
+				"PaymentMethod":   view.Order.OrderPayment,
+				"orderStatus":     view.Orderstatus,
+			})
+			count += 1
+			GrandTotal += subTotal
+		}
+		c.JSON(200, gin.H{
+			"No.Order":   count,
+			// "GrandTotal": GrandTotal,
+		})
+		
+	}
+}
+
+func Cancel_Orders(c *gin.Context) {
+	var order models.Order
+	var orderitem models.OrderItem
+	orderID := c.Param("ID")
+	fmt.Println("orderID=======>", orderID)
+	if err := initializers.DB.Where("id = ?", orderID).First(&orderitem); err.Error != nil {
+		c.JSON(500, "Order not exist")
+		fmt.Println("Order not exist=======>", err.Error)
+	} else {
+		if orderitem.Orderstatus == "Order cancelled"{
+			c.JSON(200,gin.H{
+				"message": "order already cancelled",
+			})
+			return
+		}
+		canceledAmount := orderitem.Subtotal
+		if err := initializers.DB.Model(&orderitem).Updates(&models.OrderItem{
+			Orderstatus: "Order cancelled",
+		}); err.Error != nil {
+			c.JSON(500, gin.H{"error":"Order not cancelled"})
+			fmt.Println("Order not cancelled========>", err.Error)
 		} else {
-			c.JSON(200, "Order canceled successfully")
-			quantity.Quantity = quantity.Quantity + cancel.Order_Quantity
-			initializers.DB.Save(&quantity)
-			fmt.Println("++++++++++", quantity.Quantity, cancel.Order_Quantity, "+++++++++++")
+			c.JSON(200, gin.H{"message":"Order cancelled successfully"})
+			initializers.DB.First(&order, orderitem.OrderID)
+			order.OrderPrice += int(Couponcheck.Discount)
+			if err := initializers.DB.Model(&order).Updates(&models.Order{
+				OrderPrice: order.OrderPrice - int(canceledAmount),
+			}); err.Error != nil {
+				fmt.Println("Failed to Update Order Amount========>", err.Error)
+			}
+			// orderprice := order.OrderPrice - int(canceledAmount)
+			// GrandTotal -= orderprice
+			if order.OrderPrice > 10000 {
+				order.OrderPrice -= int(Couponcheck.Discount)
+				// GrandTotal -= int(Couponcheck.Discount)
+				c.JSON(200,gin.H{
+					"message": "Coupon applied",
+				})
+				return
+			}
+			initializers.DB.Save(&order)
 		}
 	}
 }

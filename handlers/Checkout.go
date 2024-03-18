@@ -1,17 +1,19 @@
 package handlers
 
 import (
+	"crypto/rand"
 	"ecom/initializers"
 	"ecom/models"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
-
+var Couponcheck models.Coupon
 func Checkout(c *gin.Context) {
 	var order models.Order
-	var couponcheck models.Coupon
+	var orderItems models.OrderItem
 	var cart []models.Cart
 	var address models.Address
 	var Grandtotal int
@@ -26,14 +28,12 @@ func Checkout(c *gin.Context) {
 		fmt.Println("Failed to fetch data from Cart DB=====>", err.Error)
 	}
 	//========================= Cheking Coupon =========================================
-	if err := initializers.DB.Where("code = ? ", order.Coupon_Code).First(&couponcheck); err.Error != nil {
+	if err := initializers.DB.Where("code = ? ", order.CouponCode).First(&Couponcheck); err.Error != nil {
 		c.JSON(500, "Invalid Coupon")
 		fmt.Println("Invalid Coupon=====>", err.Error)
-		return
 	} else {
 		c.JSON(200, "Coupon discount Added")
-		fmt.Println("coupon=====>", couponcheck.Code, order.Coupon_Code)
-
+		fmt.Println("coupon=====>", Couponcheck.Code, order.CouponCode)
 	}
 	//========================== Address choosing ======================================
 	if err := initializers.DB.Where("user_id = ? AND id = ?", userid, order.AddressID).First(&address); err.Error != nil {
@@ -41,9 +41,21 @@ func Checkout(c *gin.Context) {
 		fmt.Println("Address not found=======>", err.Error)
 		return
 	}
+	//========================= Creating Random OrderID ================================
+	const charset = "123456789"
+	randomBytes := make([]byte, 4)
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		fmt.Println(err)
+	}
+	for i, b := range randomBytes {
+		randomBytes[i] = charset[b%byte(len(charset))]
+	}
+	orderIdstring := string(randomBytes)
+	orderId, _ := strconv.Atoi(orderIdstring)
+	fmt.Println("------", orderId)
 
-	// id, _ := strconv.Atoi(userid)
-	count := 1
+	//========================= Stock Check ============================================
 	for _, view := range cart {
 
 		quantity_price := int(view.Quantity) * view.Product.Price
@@ -52,6 +64,65 @@ func Checkout(c *gin.Context) {
 			c.JSON(500, "Product Out of Stock"+view.Product.Product_Name)
 			return
 		}
+		Grandtotal += quantity_price
+	}
+	//========================== Transaction ==============================================
+
+	tx := initializers.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+	//========================= Order Table management ====================================
+
+	var coup string
+	if Grandtotal > 10000 {
+
+		if order.CouponCode != "" {
+			Grandtotal -= int(Couponcheck.Discount)
+			coup = order.CouponCode
+			fmt.Println("check==================>", Couponcheck.Code, order.CouponCode)
+		} else {
+			coup = "No coupon added"
+		}
+	}else{
+		c.JSON(500,gin.H{
+			"error": "Cant Apply coupon for bill amount less than 10,000",
+		})
+	}
+
+	order = models.Order{
+		ID:           uint(orderId),
+		UserID:       int(userid),
+		OrderPayment: order.OrderPayment,
+		AddressID:    order.AddressID,
+		CouponCode:   coup,
+		OrderPrice:   Grandtotal,
+		OrderDate:    time.Now(),
+	}
+	if err := tx.Create(&order); err.Error != nil {
+		tx.Rollback()
+		c.JSON(500, "Failed to Place Order")
+		fmt.Println("Failed to Place Order=====>", err.Error)
+		return
+	}
+	for _, view := range cart {
+		subTotal := int(view.Quantity) * view.Product.Price
+		orderItems = models.OrderItem{
+			ProductID:     view.Product_Id,
+			OrderID:       uint(orderId),
+			OrderQuantity: int(view.Quantity),
+			Subtotal:      float64(subTotal),
+			Orderstatus:   "Pending",
+		}
+		if err := tx.Create(&orderItems); err.Error != nil {
+			tx.Rollback()
+			c.JSON(500, "Failed to Place Order")
+			fmt.Println("Failed to Place Order=====>", err.Error)
+			return
+		}
+		//========================= Stock management =======================================
 		view.Product.Quantity -= int(view.Quantity)
 		if err := initializers.DB.Save(&view.Product); err.Error != nil {
 			c.JSON(500, "Failed to update product stock")
@@ -59,34 +130,13 @@ func Checkout(c *gin.Context) {
 		} else {
 			fmt.Println("Stock Updated=====>")
 		}
-		var coup string
-		if couponcheck.Code == order.Coupon_Code && count != 0 {
-			quantity_price = quantity_price - int(couponcheck.Discount)
-			coup = order.Coupon_Code
-			count--
-			fmt.Println("check==================>", couponcheck.Code, order.Coupon_Code)
-		} else {
-			coup = "No coupon added"
-		}
+	}
 
-		order.Order_Price = quantity_price
-		order = models.Order{
-			UserID:         int(userid),
-			Order_Payment:  order.Order_Payment,
-			AddressID:      order.AddressID,
-			ProductID:      view.Product_Id,
-			Order_Quantity: int(view.Quantity),
-			Coupon_Code:    coup,
-			Order_Price:    order.Order_Price,
-			Order_Date:     time.Now(),
-			Order_status:   "Pending",
-		}
-
-		if err := initializers.DB.Create(&order); err.Error != nil {
-			c.JSON(500, "Failed to Place Order")
-			fmt.Println("Failed to Place Order", err.Error)
-		}
-		Grandtotal += quantity_price
+	if err := tx.Commit(); err.Error != nil {
+		tx.Rollback()
+		c.JSON(500, "Failed to commit transaction")
+		fmt.Println("Failed to commit transaction=====>", err.Error)
+		return
 	}
 	c.JSON(200, gin.H{
 		"message":      "Order Placed Succesfully",

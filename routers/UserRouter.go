@@ -52,7 +52,8 @@ func UserGroup(r *gin.RouterGroup) {
 	r.GET("/user/profile", middleware.JwtMiddleware(Roleuser), handlers.User_Details)
 	r.PATCH("user/profile", middleware.JwtMiddleware(Roleuser), handlers.Edit_Profile)
 	r.GET("/user/profile/order", middleware.JwtMiddleware(Roleuser), handlers.View_Orders)
-	r.PATCH("/user/profile/order", middleware.JwtMiddleware(Roleuser), handlers.Cancel_Orders)
+	r.GET("/user/profile/orderdetails/:ID", middleware.JwtMiddleware(Roleuser), handlers.View_Order_Details)
+	r.PATCH("/user/profile/order/:ID", middleware.JwtMiddleware(Roleuser), handlers.Cancel_Orders)
 
 	//============================== Checkout and Order Placing ================================
 

@@ -40,6 +40,6 @@ func AdminGroup(r *gin.RouterGroup) {
 
 	//=========================== Admin Order Management =======================================
 
-	r.GET("/order",middleware.JwtMiddleware(roleAdmin), handlers.Admin_View_order)
-	r.POST("/order/:ID",middleware.JwtMiddleware(roleAdmin),handlers.Change_Order_Status)
+	// r.GET("/order",middleware.JwtMiddleware(roleAdmin), handlers.Admin_View_order)
+	// r.POST("/order/:ID",middleware.JwtMiddleware(roleAdmin),handlers.Change_Order_Status)
 }
