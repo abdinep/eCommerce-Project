@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"crypto/rand"
+	Paymentgateways "ecom/PaymentGateways"
 	"ecom/initializers"
 	"ecom/models"
 	"fmt"
@@ -10,12 +11,15 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
 var Couponcheck models.Coupon
+
 func Checkout(c *gin.Context) {
 	var order models.Order
 	var orderItems models.OrderItem
 	var cart []models.Cart
 	var address models.Address
+	// var Payment models.Payment
 	var Grandtotal int
 
 	userid := c.GetUint("userID")
@@ -27,14 +31,32 @@ func Checkout(c *gin.Context) {
 		c.JSON(500, "Failed to fetch data from Cart DB")
 		fmt.Println("Failed to fetch data from Cart DB=====>", err.Error)
 	}
+	// ========================= Stock Check ============================================
+	for _, view := range cart {
+
+		quantity_price := int(view.Quantity) * view.Product.Price
+
+		if int(view.Quantity) > view.Product.Quantity {
+			c.JSON(500, "Product Out of Stock"+view.Product.Product_Name)
+			return
+		}
+		Grandtotal += quantity_price
+	}
+
 	//========================= Cheking Coupon =========================================
-	if err := initializers.DB.Where("code = ? ", order.CouponCode).First(&Couponcheck); err.Error != nil {
+	var coup string
+	if err := initializers.DB.Where("code = ? AND coundition < ?", order.CouponCode,Grandtotal).First(&Couponcheck); err.Error != nil {
+		fmt.Println("code===>",order.CouponCode,"condition====>",Couponcheck.Coundition,"Grandtotal=====>",Grandtotal,"couponcheck=====>",Couponcheck)
 		c.JSON(500, "Invalid Coupon")
+		coup = "No coupon added"
 		fmt.Println("Invalid Coupon=====>", err.Error)
 	} else {
-		c.JSON(200, "Coupon discount Added")
+		c.JSON(200, "Coupon Added")
+			Grandtotal -= int(Couponcheck.Discount)
+			coup = order.CouponCode
+			fmt.Println("check==================>", Couponcheck.Code, order.CouponCode)
+		}
 		fmt.Println("coupon=====>", Couponcheck.Code, order.CouponCode)
-	}
 	//========================== Address choosing ======================================
 	if err := initializers.DB.Where("user_id = ? AND id = ?", userid, order.AddressID).First(&address); err.Error != nil {
 		c.JSON(500, "Address not found")
@@ -54,18 +76,6 @@ func Checkout(c *gin.Context) {
 	orderIdstring := string(randomBytes)
 	orderId, _ := strconv.Atoi(orderIdstring)
 	fmt.Println("------", orderId)
-
-	//========================= Stock Check ============================================
-	for _, view := range cart {
-
-		quantity_price := int(view.Quantity) * view.Product.Price
-
-		if int(view.Quantity) > view.Product.Quantity {
-			c.JSON(500, "Product Out of Stock"+view.Product.Product_Name)
-			return
-		}
-		Grandtotal += quantity_price
-	}
 	//========================== Transaction ==============================================
 
 	tx := initializers.DB.Begin()
@@ -74,23 +84,34 @@ func Checkout(c *gin.Context) {
 			tx.Rollback()
 		}
 	}()
-	//========================= Order Table management ====================================
+	//======================== Payment Gateway ==============================================
 
-	var coup string
-	if Grandtotal > 10000 {
-
-		if order.CouponCode != "" {
-			Grandtotal -= int(Couponcheck.Discount)
-			coup = order.CouponCode
-			fmt.Println("check==================>", Couponcheck.Code, order.CouponCode)
+	fmt.Println("orderid==>", orderId, "grandtotal==>", Grandtotal)
+	if order.OrderPayment == "UPI" {
+		OrderPaymentID, err := Paymentgateways.HandlePaymentSubmission(orderId, Grandtotal)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err})
+			tx.Rollback()
+			return
 		} else {
-			coup = "No coupon added"
+			c.JSON(200, gin.H{
+				"message":   "Continue to Payment",
+				"paymentID": OrderPaymentID,
+			})
 		}
-	}else{
-		c.JSON(500,gin.H{
-			"error": "Cant Apply coupon for bill amount less than 10,000",
-		})
+		fmt.Println("orderpayment:==>", OrderPaymentID)
+		fmt.Println("receipt====>", orderId)
+		if err := initializers.DB.Create(&models.Payment{
+			OrderID:       OrderPaymentID,
+			Receipt:       orderId,
+			PaymentStatus: "not done",
+			PaymentAmount: Grandtotal,
+		}); err.Error != nil {
+			c.JSON(500, gin.H{"Error": "Failed to upload payment details"})
+			fmt.Println("Failed to upload payment details", err.Error)
+		}
 	}
+	//========================= Order Table management ====================================
 
 	order = models.Order{
 		ID:           uint(orderId),
@@ -116,6 +137,7 @@ func Checkout(c *gin.Context) {
 			Subtotal:      float64(subTotal),
 			Orderstatus:   "Pending",
 		}
+		fmt.Println("orderitems", orderItems)
 		if err := tx.Create(&orderItems); err.Error != nil {
 			tx.Rollback()
 			c.JSON(500, "Failed to Place Order")
@@ -132,19 +154,21 @@ func Checkout(c *gin.Context) {
 		}
 	}
 
+	// if err := initializers.DB.Where("user_id = ?", userid).Delete(&models.Cart{}); err.Error != nil {
+	// 	c.JSON(500, "Failed to delete order")
+	// 	return
+	// }
 	if err := tx.Commit(); err.Error != nil {
 		tx.Rollback()
 		c.JSON(500, "Failed to commit transaction")
 		fmt.Println("Failed to commit transaction=====>", err.Error)
 		return
 	}
-	c.JSON(200, gin.H{
-		"message":      "Order Placed Succesfully",
-		"Grand Total ": Grandtotal,
-	})
-
-	if err := initializers.DB.Where("user_id = ?", userid).Delete(&models.Cart{}); err.Error != nil {
-		c.JSON(500, "Failed to delete order")
-		return
+	if order.OrderPayment != "UPI" {
+		c.JSON(200, gin.H{
+			"message":      "Order Placed Succesfully",
+			"Grand Total ": Grandtotal,
+		})
 	}
+
 }

@@ -332,6 +332,7 @@ func View_Order_Details(c *gin.Context) {
 func Cancel_Orders(c *gin.Context) {
 	var order models.Order
 	var orderitem models.OrderItem
+	var coup models.Coupon
 	orderID := c.Param("ID")
 	fmt.Println("orderID=======>", orderID)
 	if err := initializers.DB.Where("id = ?", orderID).First(&orderitem); err.Error != nil {
@@ -361,7 +362,8 @@ func Cancel_Orders(c *gin.Context) {
 			}
 			// orderprice := order.OrderPrice - int(canceledAmount)
 			// GrandTotal -= orderprice
-			if order.OrderPrice > 10000 {
+			initializers.DB.First(&coup,"code = ?",order.CouponCode)
+			if order.OrderPrice > coup.Coundition {
 				order.OrderPrice -= int(Couponcheck.Discount)
 				// GrandTotal -= int(Couponcheck.Discount)
 				c.JSON(200,gin.H{

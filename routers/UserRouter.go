@@ -1,6 +1,7 @@
 package routers
 
 import (
+	Paymentgateways "ecom/PaymentGateways"
 	"ecom/controllers"
 	"ecom/handlers"
 	"ecom/middleware"
@@ -65,6 +66,10 @@ func UserGroup(r *gin.RouterGroup) {
 
 	r.GET("/auth/google", controllers.Googlelogin)
 	// r.GET("/auth/google/callback",controllers.GoogleCallback)
+
+	//=============================== Razorpay Payment Template ========================================
+	r.GET("/payment",Paymentgateways.PaymentTemplate)
+	r.POST("/payment/submit",Paymentgateways.PaymentDetailsFromFrontend)
 
 	// ================================== END ===================================================
 }
