@@ -2,6 +2,7 @@ package handlers
 
 import (
 	Paymentgateways "ecom/PaymentGateways"
+	handlers "ecom/handlers/Admin"
 	"ecom/initializers"
 	"ecom/middleware"
 	"ecom/models"
@@ -46,6 +47,9 @@ func ProductDetails(c *gin.Context) {
 			"product size":        product.Size,
 			"product discription": product.Description,
 		})
+		result := handlers.OfferCalc(int(product.ID),c)
+			c.JSON(200,gin.H{"Message":"Offer Available","result":result})
+		
 	}
 	if product.Quantity == 0 {
 		c.JSON(http.StatusOK, gin.H{
@@ -75,6 +79,8 @@ func ProductDetails(c *gin.Context) {
 				"product discription": value.Description,
 				"category":            value.Category.Name,
 			})
+			result := handlers.OfferCalc(int(value.ID),c)
+			c.JSON(200,gin.H{"result":result})
 		}
 	}
 }
@@ -321,6 +327,8 @@ func View_Order_Details(c *gin.Context) {
 			})
 			count += 1
 			GrandTotal += subTotal
+			result := handlers.OfferCalc(view.ProductID,c)
+			c.JSON(200,gin.H{"result":result})
 		}
 		c.JSON(200, gin.H{
 			"No.Order": count,

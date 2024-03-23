@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	handlers "ecom/handlers/Admin"
 	"ecom/initializers"
 	"ecom/models"
 	"fmt"
@@ -68,7 +69,7 @@ func Remove_Quantity_cart(c *gin.Context) {
 	userid := c.GetUint("userID")
 	if err := initializers.DB.Where("product_id = ? AND user_id = ? ", id, userid).First(&dbremove); err.Error != nil {
 		c.JSON(500, "Failed to fetch data")
-		fmt.Println("Failed to fetch data=====>", err.Error,userid,id)
+		fmt.Println("Failed to fetch data=====>", err.Error, userid, id)
 	} else {
 		dbremove.Quantity -= 1
 		c.JSON(200, gin.H{"count": dbremove.Quantity})
@@ -91,24 +92,31 @@ func View_Cart(c *gin.Context) {
 	} else {
 
 		count := 0
+		var offer float64
 		// id, _ := strconv.Atoi(id)
 		for _, view := range cart {
 			if view.User_id == int(id) {
 				quantity_price = int(view.Quantity) * view.Product.Price
 				c.JSON(200, gin.H{
-					"product_id":       view.Product_Id,
-					"Product_Name":     view.Product.Product_Name,
-					"Product_image":    view.Product.ImagePath1,
-					"Product_Price":    view.Product.Price,
-					"Product_Quantity": view.Quantity,
+					"productId":       view.Product_Id,
+					"ProductName":     view.Product.Product_Name,
+					"ProductImage":    view.Product.ImagePath1,
+					"ProductPrice":    view.Product.Price,
+					"ProductQuantity": view.Quantity,
 				})
 				Grandtotal += quantity_price
 				count += 1
+				offer = handlers.OfferCalc(view.Product_Id, c)
+				c.JSON(200, gin.H{
+					"Message": "Offer Available",
+					"Discount":  offer,
+				})
+				offer += offer
 			}
 		}
 		c.JSON(200, gin.H{
 			"total_number": count,
-			"Grand Total":  Grandtotal,
+			"Grand Total":  Grandtotal-int(offer),
 		})
 	}
 }
