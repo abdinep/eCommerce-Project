@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	Paymentgateways "ecom/PaymentGateways"
 	"ecom/initializers"
 	"ecom/middleware"
 	"ecom/models"
@@ -322,38 +323,53 @@ func View_Order_Details(c *gin.Context) {
 			GrandTotal += subTotal
 		}
 		c.JSON(200, gin.H{
-			"No.Order":   count,
+			"No.Order": count,
 			// "GrandTotal": GrandTotal,
 		})
-		
+
 	}
 }
 
 func Cancel_Orders(c *gin.Context) {
 	var order models.Order
 	var orderitem models.OrderItem
-	var coup models.Coupon
+	// var coup models.Coupon
+	var wallet models.Wallet
 	orderID := c.Param("ID")
 	fmt.Println("orderID=======>", orderID)
 	if err := initializers.DB.Where("id = ?", orderID).First(&orderitem); err.Error != nil {
 		c.JSON(500, "Order not exist")
 		fmt.Println("Order not exist=======>", err.Error)
 	} else {
-		if orderitem.Orderstatus == "Order cancelled"{
-			c.JSON(200,gin.H{
+		if orderitem.Orderstatus == "Order cancelled" {
+			c.JSON(200, gin.H{
 				"message": "order already cancelled",
 			})
 			return
 		}
 		canceledAmount := orderitem.Subtotal
+		var paymentid models.Payment
+		initializers.DB.Where("order_id = ?",orderID).First(&paymentid)
+		result := Paymentgateways.RefundCancelledAmount(paymentid.PaymentID,int(canceledAmount))
+		fmt.Println("result=======>",result)
 		if err := initializers.DB.Model(&orderitem).Updates(&models.OrderItem{
 			Orderstatus: "Order cancelled",
 		}); err.Error != nil {
-			c.JSON(500, gin.H{"error":"Order not cancelled"})
+			c.JSON(500, gin.H{"error": "Order not cancelled"})
 			fmt.Println("Order not cancelled========>", err.Error)
 		} else {
-			c.JSON(200, gin.H{"message":"Order cancelled successfully"})
+			c.JSON(200, gin.H{"message": "Order cancelled successfully"})
 			initializers.DB.First(&order, orderitem.OrderID)
+			if err := initializers.DB.Where("user_id = ?",order.UserID).First(&wallet); err.Error != nil{
+				c.JSON(500,gin.H{"Error": "Failed to add Money to wallet"})
+				fmt.Println("Failed to add Money to wallet======>",err.Error)
+				return
+			}
+	//=========================== Adding cancelled amount to wallet ==========================================
+			wallet.Balance += int(canceledAmount)
+			wallet.Updated_at = time.Now()
+			initializers.DB.Save(&wallet)
+
 			order.OrderPrice += int(Couponcheck.Discount)
 			if err := initializers.DB.Model(&order).Updates(&models.Order{
 				OrderPrice: order.OrderPrice - int(canceledAmount),
@@ -362,18 +378,17 @@ func Cancel_Orders(c *gin.Context) {
 			}
 			// orderprice := order.OrderPrice - int(canceledAmount)
 			// GrandTotal -= orderprice
-			initializers.DB.First(&coup,"code = ?",order.CouponCode)
-			if order.OrderPrice > coup.Coundition {
-				order.OrderPrice -= int(Couponcheck.Discount)
-				// GrandTotal -= int(Couponcheck.Discount)
-				c.JSON(200,gin.H{
-					"message": "Coupon applied",
-				})
-				return
+			// initializers.DB.First(&coup, "code = ?", order.CouponCode)
+			// if order.OrderPrice > coup.Coundition {
+			// 	order.OrderPrice -= int(Couponcheck.Discount)
+			// 	// GrandTotal -= int(Couponcheck.Discount)
+			// 	c.JSON(200, gin.H{
+			// 		"message": "Coupon applied",
+			// 	})
+
+				initializers.DB.Save(&order)
 			}
-			initializers.DB.Save(&order)
 		}
 	}
-}
 
 // ========================================= END ==================================================

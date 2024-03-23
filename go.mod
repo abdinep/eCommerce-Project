@@ -7,7 +7,7 @@ require (
 	github.com/gin-contrib/sessions v0.0.5
 	github.com/gin-gonic/gin v1.9.1
 	github.com/joho/godotenv v1.5.1
-	github.com/plutov/paypal v2.0.5+incompatible
+	github.com/razorpay/razorpay-go v1.3.1
 	golang.org/x/crypto v0.19.0
 	golang.org/x/oauth2 v0.17.0
 	gorm.io/driver/postgres v1.5.6
@@ -21,7 +21,6 @@ require (
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/gorilla/sessions v1.2.2 // indirect
-	github.com/razorpay/razorpay-go v1.3.1 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 )
 

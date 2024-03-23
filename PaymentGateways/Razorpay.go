@@ -1,14 +1,17 @@
 package Paymentgateways
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
 	"crypto/subtle"
 	"ecom/initializers"
 	"ecom/models"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 
@@ -51,18 +54,18 @@ func PaymentDetailsFromFrontend(c *gin.Context) {
 		fmt.Println("====>", err)
 		return
 	}
-	
-	fmt.Println("======",Paymentdetails["order_Id"])
-	if err := initializers.DB.Where("order_id = ?",Paymentdetails["order_Id"]).First(&Payment); err.Error != nil {
+
+	fmt.Println("======", Paymentdetails["order_Id"])
+	if err := initializers.DB.Where("order_id = ?", Paymentdetails["order_Id"]).First(&Payment); err.Error != nil {
 		c.JSON(500, gin.H{"Error": "OrderID not found"})
 		fmt.Println("OrderID not found====>", err.Error)
 		return
 	}
-	fmt.Println("-------",Payment)
+	fmt.Println("-------", Payment)
 	Payment.PaymentID = Paymentdetails["paymentID"]
 	Payment.PaymentStatus = "Done"
 	if err := initializers.DB.Model(&Payment).Updates(&models.Payment{
-		PaymentID: Payment.PaymentID,
+		PaymentID:     Payment.PaymentID,
 		PaymentStatus: Payment.PaymentStatus,
 	}); err.Error != nil {
 		c.JSON(500, gin.H{"Error": "Failed to update paymentID"})
@@ -87,4 +90,49 @@ func RazorPaymentVerification(sign, orderId, paymentId string) error {
 	} else {
 		return nil
 	}
+}
+func RefundCancelledAmount(paymentID string, amount int) error {
+	// Prepare refund request body
+	refundData := map[string]interface{}{
+		"amount": amount,
+	}
+	refundBody, err := json.Marshal(refundData)
+	if err != nil {
+		return err
+	}
+
+	// Create HTTP client
+	client := &http.Client{}
+
+	// Prepare refund request
+	refundURL := fmt.Sprintf("https://api.razorpay.com/v1/payments/%s/refund", paymentID)
+	req, err := http.NewRequest("POST", refundURL, bytes.NewBuffer(refundBody))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	// Set Razorpay API key for authentication
+	req.SetBasicAuth("rzp_test_CRHoZP9WQjbjhm", "0M4F9wxvzeoSpMsLuTSycQan")
+
+	// Send refund request
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Read response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	// Handle response
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("refund request failed: %s", string(body))
+	}
+
+	fmt.Println("Refund successful")
+	return nil
 }

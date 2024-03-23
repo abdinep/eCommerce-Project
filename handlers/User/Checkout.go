@@ -45,18 +45,18 @@ func Checkout(c *gin.Context) {
 
 	//========================= Cheking Coupon =========================================
 	var coup string
-	if err := initializers.DB.Where("code = ? AND coundition < ?", order.CouponCode,Grandtotal).First(&Couponcheck); err.Error != nil {
-		fmt.Println("code===>",order.CouponCode,"condition====>",Couponcheck.Coundition,"Grandtotal=====>",Grandtotal,"couponcheck=====>",Couponcheck)
+	if err := initializers.DB.Where("code = ? AND coundition < ?", order.CouponCode, Grandtotal).First(&Couponcheck); err.Error != nil {
+		fmt.Println("code===>", order.CouponCode, "condition====>", Couponcheck.Coundition, "Grandtotal=====>", Grandtotal, "couponcheck=====>", Couponcheck)
 		c.JSON(500, "Invalid Coupon")
 		coup = "No coupon added"
 		fmt.Println("Invalid Coupon=====>", err.Error)
 	} else {
 		c.JSON(200, "Coupon Added")
-			Grandtotal -= int(Couponcheck.Discount)
-			coup = order.CouponCode
-			fmt.Println("check==================>", Couponcheck.Code, order.CouponCode)
-		}
-		fmt.Println("coupon=====>", Couponcheck.Code, order.CouponCode)
+		Grandtotal -= int(Couponcheck.Discount)
+		coup = order.CouponCode
+		fmt.Println("check==================>", Couponcheck.Code, order.CouponCode)
+	}
+	fmt.Println("coupon=====>", Couponcheck.Code, order.CouponCode)
 	//========================== Address choosing ======================================
 	if err := initializers.DB.Where("user_id = ? AND id = ?", userid, order.AddressID).First(&address); err.Error != nil {
 		c.JSON(500, "Address not found")
@@ -154,10 +154,10 @@ func Checkout(c *gin.Context) {
 		}
 	}
 
-	// if err := initializers.DB.Where("user_id = ?", userid).Delete(&models.Cart{}); err.Error != nil {
-	// 	c.JSON(500, "Failed to delete order")
-	// 	return
-	// }
+	if err := initializers.DB.Where("user_id = ?", userid).Delete(&models.Cart{}); err.Error != nil {
+		c.JSON(500, "Failed to delete order")
+		return
+	}
 	if err := tx.Commit(); err.Error != nil {
 		tx.Rollback()
 		c.JSON(500, "Failed to commit transaction")

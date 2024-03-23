@@ -105,6 +105,8 @@ func Otpcheck(c *gin.Context) {
 	var check models.Otp
 	var userotp models.Otp
 	var existinigOtp models.Otp
+	var wallet models.Wallet
+	var userid models.User
 	c.ShouldBindJSON(&userotp)
 	initializers.DB.First(&check, "email=?", Signup.Email)
 	fmt.Println("=======(", check.Otp, ")=========(", userotp.Otp, ")=========", "(", Signup.Email, ")=========")
@@ -117,6 +119,14 @@ func Otpcheck(c *gin.Context) {
 			c.JSON(501, "User already exist")
 			return
 		} else {
+			initializers.DB.First(&userid, "email = ?", Signup.Email)
+			wallet.Created_at = time.Now()
+			wallet.UserID = userid.ID
+			if err := initializers.DB.Create(&wallet); err.Error != nil {
+				c.JSON(500, "Failed to create wallet")
+				fmt.Println("Failed to create wallet====>", err.Error)
+				return
+			}
 			c.JSON(200, "Successfully signed up")
 		}
 	}

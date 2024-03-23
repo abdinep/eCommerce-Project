@@ -1,22 +1,24 @@
 package routers
 
 import (
-	"ecom/controllers"
-	"ecom/handlers"
+	controllers "ecom/controllers/Admin"
+	handlers "ecom/handlers/Admin"
 	"ecom/middleware"
 
 	"github.com/gin-gonic/gin"
 )
+
 var roleAdmin = "admin"
+
 func AdminGroup(r *gin.RouterGroup) {
 
 	r.POST("/login", controllers.Login)
-	r.GET("/logout",controllers.Admin_Logout)
+	r.GET("/logout", controllers.Admin_Logout)
 	//=========================== Admin user management ======================================
 
-	r.GET("/usermanagement",middleware.JwtMiddleware(roleAdmin), handlers.List_user)
-	r.PATCH("/usermanagement/edit/:ID",middleware.JwtMiddleware(roleAdmin), handlers.Edit_User)
-	r.PATCH("/usermanagement/block/:ID",middleware.JwtMiddleware(roleAdmin), handlers.Status)
+	r.GET("/usermanagement", middleware.JwtMiddleware(roleAdmin), handlers.List_user)
+	r.PATCH("/usermanagement/edit/:ID", middleware.JwtMiddleware(roleAdmin), handlers.Edit_User)
+	r.PATCH("/usermanagement/block/:ID", middleware.JwtMiddleware(roleAdmin), handlers.Status)
 
 	//=========================== Admin Coupon management ======================================
 
@@ -24,18 +26,18 @@ func AdminGroup(r *gin.RouterGroup) {
 
 	//=========================== Admin Product management ===================================
 
-	r.GET("/products/addproduct",middleware.JwtMiddleware(roleAdmin), handlers.Add_Product)
-	r.POST("/products/addproduct",middleware.JwtMiddleware(roleAdmin), handlers.ProductImage)
-	r.GET("/products",middleware.JwtMiddleware(roleAdmin), handlers.View_Product)
-	r.PATCH("/products/edit/:ID",middleware.JwtMiddleware(roleAdmin), handlers.Edit_Product)
-	r.DELETE("/products/delete/:ID",middleware.JwtMiddleware(roleAdmin), handlers.Delete_Product)
+	r.GET("/products/addproduct", middleware.JwtMiddleware(roleAdmin), handlers.Add_Product)
+	r.POST("/products/addproduct", middleware.JwtMiddleware(roleAdmin), handlers.ProductImage)
+	r.GET("/products", middleware.JwtMiddleware(roleAdmin), handlers.View_Product)
+	r.PATCH("/products/edit/:ID", middleware.JwtMiddleware(roleAdmin), handlers.Edit_Product)
+	r.DELETE("/products/delete/:ID", middleware.JwtMiddleware(roleAdmin), handlers.Delete_Product)
 
 	//=========================== Admin Category Management ==================================
 
-	r.POST("/category/addcategory",middleware.JwtMiddleware(roleAdmin), handlers.Category)
-	r.GET("/category",middleware.JwtMiddleware(roleAdmin), handlers.View_Category)
-	r.POST("/category/edit/:ID",middleware.JwtMiddleware(roleAdmin), handlers.Edit_Category)
-	r.DELETE("/category/delete/:ID",middleware.JwtMiddleware(roleAdmin), handlers.Delete_Category)
+	r.POST("/category/addcategory", middleware.JwtMiddleware(roleAdmin), handlers.Category)
+	r.GET("/category", middleware.JwtMiddleware(roleAdmin), handlers.View_Category)
+	r.POST("/category/edit/:ID", middleware.JwtMiddleware(roleAdmin), handlers.Edit_Category)
+	r.DELETE("/category/delete/:ID", middleware.JwtMiddleware(roleAdmin), handlers.Delete_Category)
 	// r.PATCH("/admin_panel/products/Recover/:ID",handlers.Undelete_Product)
 
 	//=========================== Admin Order Management =======================================

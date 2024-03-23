@@ -2,8 +2,8 @@ package routers
 
 import (
 	Paymentgateways "ecom/PaymentGateways"
-	"ecom/controllers"
-	"ecom/handlers"
+	controllers "ecom/controllers/User"
+	handlers "ecom/handlers/User"
 	"ecom/middleware"
 
 	"github.com/gin-gonic/gin"
@@ -45,7 +45,7 @@ func UserGroup(r *gin.RouterGroup) {
 	r.POST("/cart/:ID", middleware.JwtMiddleware(Roleuser), handlers.Add_Cart)
 	r.GET("/cart", middleware.JwtMiddleware(Roleuser), handlers.View_Cart)
 	r.PATCH("/cart/addquantity/:ID", middleware.JwtMiddleware(Roleuser), handlers.Add_Quantity_Cart)
-	r.PATCH("/cart/removequantity/:ID",middleware.JwtMiddleware(Roleuser), handlers.Remove_Quantity_cart)
+	r.PATCH("/cart/removequantity/:ID", middleware.JwtMiddleware(Roleuser), handlers.Remove_Quantity_cart)
 	r.DELETE("/cart/:ID", middleware.JwtMiddleware(Roleuser), handlers.Remove_Cart_Product)
 
 	//========================== User Profile ==================================================
@@ -56,6 +56,11 @@ func UserGroup(r *gin.RouterGroup) {
 	r.GET("/user/profile/orderdetails/:ID", middleware.JwtMiddleware(Roleuser), handlers.View_Order_Details)
 	r.PATCH("/user/profile/order/:ID", middleware.JwtMiddleware(Roleuser), handlers.Cancel_Orders)
 
+	//============================== wishlist =====================================================
+
+	r.POST("/user/wishlist/:ID", middleware.JwtMiddleware(Roleuser), handlers.AddWishlist)
+	r.GET("/user/wishlist", middleware.JwtMiddleware(Roleuser), handlers.ViewWishlist)
+	r.DELETE("user/wishlist/:ID", middleware.JwtMiddleware(Roleuser), handlers.DeleteWishlist)
 	//============================== Checkout and Order Placing ================================
 
 	r.POST("/checkout", middleware.JwtMiddleware(Roleuser), handlers.Checkout)
@@ -67,9 +72,9 @@ func UserGroup(r *gin.RouterGroup) {
 	r.GET("/auth/google", controllers.Googlelogin)
 	// r.GET("/auth/google/callback",controllers.GoogleCallback)
 
-	//=============================== Razorpay Payment Template ========================================
-	r.GET("/payment",Paymentgateways.PaymentTemplate)
-	r.POST("/payment/submit",Paymentgateways.PaymentDetailsFromFrontend)
+	//=============================== Payment Gateway ========================================
+	r.GET("/payment", Paymentgateways.PaymentTemplate)
+	r.POST("/payment/submit", Paymentgateways.PaymentDetailsFromFrontend)
 
 	// ================================== END ===================================================
 }
