@@ -7,7 +7,9 @@ require (
 	github.com/gin-contrib/sessions v0.0.5
 	github.com/gin-gonic/gin v1.9.1
 	github.com/joho/godotenv v1.5.1
+	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/razorpay/razorpay-go v1.3.1
+	github.com/tealeg/xlsx v1.0.5
 	golang.org/x/crypto v0.19.0
 	golang.org/x/oauth2 v0.17.0
 	gorm.io/driver/postgres v1.5.6

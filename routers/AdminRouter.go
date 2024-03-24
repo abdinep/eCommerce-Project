@@ -50,4 +50,9 @@ func AdminGroup(r *gin.RouterGroup) {
 
 	r.POST("/offer/:ID",middleware.JwtMiddleware(roleAdmin),handlers.AddOffer)
 	r.GET("/offer",middleware.JwtMiddleware(roleAdmin),handlers.ViewOffer)
+
+	//============================= Sales Report ================================================
+
+	r.GET("/SalesReport/downloadexcel",middleware.JwtMiddleware(roleAdmin),handlers.GenerateSalesReport)
+	r.GET("/SalesReport/downloadpdf",middleware.JwtMiddleware(roleAdmin),handlers.SalesReportPDF)
 }
