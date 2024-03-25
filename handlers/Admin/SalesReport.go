@@ -25,15 +25,6 @@ func SalesReport() {
 
 func GenerateSalesReport(c *gin.Context) {
 
-	// var orderitems []models.OrderItem
-	// var order []models.Order
-	// var totalAmount float64
-	// var cancelCount int
-	// initializers.DB.Find(&order)
-	// for _, val := range order {
-	// 	totalAmount += float64(val.OrderPrice)
-	// }
-
 	var OrderData []models.OrderItem
 	if err := initializers.DB.Preload("Product").Preload("Order.User").Find(&OrderData).Error; err != nil {
 		c.JSON(500, gin.H{
@@ -138,3 +129,26 @@ func SalesReportPDF(c *gin.Context) {
 	c.JSON(200, gin.H{"Message": "PDF file generated and downloaded successfully"})
 	fmt.Println("PDF file generated and sent successfully")
 }
+// func SearchReport(c *gin.Context){
+// 	searchQuery := c.Query("query")
+// 	query := initializers.DB
+// 	var items []models.Order
+// 	if searchQuery != ""{
+// 		if err := query.Where("order_date = ?",searchQuery).Find(&items); err.Error != nil{
+// 			c.JSON(500,gin.H{"Error":"Failed to get report"})
+// 			fmt.Println("Failed to get report====>",err.Error)
+// 			return
+// 		}
+// 	for _, value := range items{
+// 		c.JSON(200,gin.H{
+// 			"Date": value.OrderDate,
+// 			"OrderID": value.ID,
+// 			"Price": value.OrderPrice,
+// 		})
+// 	}
+// }
+// 	// switch sortBy {
+// 	// case "daily":
+// 	// 	query = query.Where("")
+// 	// }
+// }

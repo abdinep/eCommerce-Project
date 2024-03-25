@@ -96,7 +96,7 @@ func View_Cart(c *gin.Context) {
 		// id, _ := strconv.Atoi(id)
 		for _, view := range cart {
 			if view.User_id == int(id) {
-				quantity_price = int(view.Quantity) * view.Product.Price
+				quantity_price = int(view.Quantity) * (view.Product.Price - int(handlers.OfferCalc(view.Product_Id, c)))
 				c.JSON(200, gin.H{
 					"productId":       view.Product_Id,
 					"ProductName":     view.Product.Product_Name,
@@ -106,17 +106,16 @@ func View_Cart(c *gin.Context) {
 				})
 				Grandtotal += quantity_price
 				count += 1
-				offer = handlers.OfferCalc(view.Product_Id, c)
-				c.JSON(200, gin.H{
-					"Message": "Offer Available",
-					"Discount":  offer,
-				})
+					c.JSON(200, gin.H{
+						"Message":  "Offer Available",
+						"Discount": handlers.OfferCalc(view.Product_Id, c),
+					})
 				offer += offer
 			}
 		}
 		c.JSON(200, gin.H{
 			"total_number": count,
-			"Grand Total":  Grandtotal-int(offer),
+			"Grand Total":  Grandtotal - int(offer),
 		})
 	}
 }

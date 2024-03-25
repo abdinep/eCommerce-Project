@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	Paymentgateways "ecom/PaymentGateways"
 	handlers "ecom/handlers/Admin"
 	"ecom/initializers"
 	"ecom/middleware"
@@ -47,9 +46,9 @@ func ProductDetails(c *gin.Context) {
 			"product size":        product.Size,
 			"product discription": product.Description,
 		})
-		result := handlers.OfferCalc(int(product.ID),c)
-			c.JSON(200,gin.H{"Message":"Offer Available","result":result})
-		
+		result := handlers.OfferCalc(int(product.ID), c)
+		c.JSON(200, gin.H{"Message": "Offer Available", "result": result})
+
 	}
 	if product.Quantity == 0 {
 		c.JSON(http.StatusOK, gin.H{
@@ -79,8 +78,8 @@ func ProductDetails(c *gin.Context) {
 				"product discription": value.Description,
 				"category":            value.Category.Name,
 			})
-			result := handlers.OfferCalc(int(value.ID),c)
-			c.JSON(200,gin.H{"result":result})
+			result := handlers.OfferCalc(int(value.ID), c)
+			c.JSON(200, gin.H{"result": result})
 		}
 	}
 }
@@ -327,8 +326,8 @@ func View_Order_Details(c *gin.Context) {
 			})
 			count += 1
 			GrandTotal += subTotal
-			result := handlers.OfferCalc(view.ProductID,c)
-			c.JSON(200,gin.H{"result":result})
+			result := handlers.OfferCalc(view.ProductID, c)
+			c.JSON(200, gin.H{"result": result})
 		}
 		c.JSON(200, gin.H{
 			"No.Order": count,
@@ -357,9 +356,9 @@ func Cancel_Orders(c *gin.Context) {
 		}
 		canceledAmount := orderitem.Subtotal
 		var paymentid models.Payment
-		initializers.DB.Where("order_id = ?",orderID).First(&paymentid)
-		result := Paymentgateways.RefundCancelledAmount(paymentid.PaymentID,int(canceledAmount))
-		fmt.Println("result=======>",result)
+		initializers.DB.Where("order_id = ?", orderID).First(&paymentid)
+		// result := Paymentgateways.RefundCancelledAmount(paymentid.PaymentID,int(canceledAmount))
+		// fmt.Println("result=======>",result)
 		if err := initializers.DB.Model(&orderitem).Updates(&models.OrderItem{
 			Orderstatus: "Order cancelled",
 		}); err.Error != nil {
@@ -368,12 +367,12 @@ func Cancel_Orders(c *gin.Context) {
 		} else {
 			c.JSON(200, gin.H{"message": "Order cancelled successfully"})
 			initializers.DB.First(&order, orderitem.OrderID)
-			if err := initializers.DB.Where("user_id = ?",order.UserID).First(&wallet); err.Error != nil{
-				c.JSON(500,gin.H{"Error": "Failed to add Money to wallet"})
-				fmt.Println("Failed to add Money to wallet======>",err.Error)
+			if err := initializers.DB.Where("user_id = ?", order.UserID).First(&wallet); err.Error != nil {
+				c.JSON(500, gin.H{"Error": "Failed to add Money to wallet"})
+				fmt.Println("Failed to add Money to wallet======>", err.Error)
 				return
 			}
-	//=========================== Adding cancelled amount to wallet ==========================================
+			//=========================== Adding cancelled amount to wallet ==========================================
 			wallet.Balance += int(canceledAmount)
 			wallet.Updated_at = time.Now()
 			initializers.DB.Save(&wallet)
@@ -394,9 +393,9 @@ func Cancel_Orders(c *gin.Context) {
 			// 		"message": "Coupon applied",
 			// 	})
 
-				initializers.DB.Save(&order)
-			}
+			initializers.DB.Save(&order)
 		}
 	}
+}
 
 // ========================================= END ==================================================

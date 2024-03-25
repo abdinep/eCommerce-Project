@@ -3,6 +3,7 @@ package handlers
 import (
 	"crypto/rand"
 	Paymentgateways "ecom/PaymentGateways"
+	handlers "ecom/handlers/Admin"
 	"ecom/initializers"
 	"ecom/models"
 	"fmt"
@@ -34,12 +35,13 @@ func Checkout(c *gin.Context) {
 	// ========================= Stock Check ============================================
 	for _, view := range cart {
 
-		quantity_price := int(view.Quantity) * view.Product.Price
+		quantity_price := int(view.Quantity) * (view.Product.Price - int(handlers.OfferCalc(view.Product_Id, c)))
 
 		if int(view.Quantity) > view.Product.Quantity {
 			c.JSON(500, "Product Out of Stock"+view.Product.Product_Name)
 			return
 		}
+
 		Grandtotal += quantity_price
 	}
 
@@ -101,7 +103,7 @@ func Checkout(c *gin.Context) {
 		}
 		fmt.Println("orderpayment:==>", OrderPaymentID)
 		fmt.Println("receipt====>", orderId)
-		if err := initializers.DB.Create(&models.Payment{
+		if err := tx.Create(&models.Payment{
 			OrderID:       OrderPaymentID,
 			Receipt:       orderId,
 			PaymentStatus: "not done",
@@ -109,6 +111,7 @@ func Checkout(c *gin.Context) {
 		}); err.Error != nil {
 			c.JSON(500, gin.H{"Error": "Failed to upload payment details"})
 			fmt.Println("Failed to upload payment details", err.Error)
+			tx.Rollback()
 		}
 	}
 	//========================= Order Table management ====================================

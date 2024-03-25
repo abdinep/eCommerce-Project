@@ -55,4 +55,5 @@ func AdminGroup(r *gin.RouterGroup) {
 
 	r.GET("/SalesReport/downloadexcel",middleware.JwtMiddleware(roleAdmin),handlers.GenerateSalesReport)
 	r.GET("/SalesReport/downloadpdf",middleware.JwtMiddleware(roleAdmin),handlers.SalesReportPDF)
+	// r.GET("/dailyreport",middleware.JwtMiddleware(roleAdmin),handlers.SearchReport)
 }

@@ -54,7 +54,7 @@ func OfferCalc(productid int, c *gin.Context) float64 {
 	var offercheck models.Offer
 	var Discount float64
 	if err := initializers.DB.Joins("Product").First(&offercheck,"product_id = ?", productid); err.Error != nil {
-		c.JSON(500, gin.H{"Error": "No Offers"})
+		// c.JSON(500, gin.H{"Error": "No Offers"})
 	} else {
 		percentage := offercheck.Amount
 		ProductAmount := offercheck.Product.Price

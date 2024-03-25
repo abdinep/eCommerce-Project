@@ -24,6 +24,8 @@ func SeaechProduct(c *gin.Context) {
 		query = query.Order("price desc")
 	case "new_arrivals":
 		query = query.Order("created_at desc")
+	case "category":
+		query = query.Order("category_id")
 	case "a_to_z":
 		query = query.Order("product_name asc")
 	case "z_to_a":
