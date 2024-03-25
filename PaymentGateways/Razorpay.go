@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -19,7 +20,9 @@ import (
 func HandlePaymentSubmission(orderid int, amount int) (string, error) {
 	// Get payment details from the request body (replace with your actual logic)
 	fmt.Println("paymentorderid==>", orderid, "paymentamount==>", amount)
-	razorpayClient := razorpay.NewClient("rzp_test_CRHoZP9WQjbjhm", "0M4F9wxvzeoSpMsLuTSycQan")
+	keyid := os.Getenv("KEYID")
+	secretKey := os.Getenv("SECRETKEY")
+	razorpayClient := razorpay.NewClient(keyid, secretKey)
 
 	paymentDetails := map[string]interface{}{
 		"amount":   amount * 100,
@@ -73,8 +76,9 @@ func PaymentDetailsFromFrontend(c *gin.Context) {
 	}
 }
 func RazorPaymentVerification(sign, orderId, paymentId string) error {
+	secretKey := os.Getenv("SECRETKEY")
 	signature := sign
-	secret := "0M4F9wxvzeoSpMsLuTSycQan"
+	secret := secretKey
 	data := orderId + "|" + paymentId
 	h := hmac.New(sha256.New, []byte(secret))
 	_, err := h.Write([]byte(data))
