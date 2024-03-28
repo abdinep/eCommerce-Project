@@ -16,7 +16,6 @@ import (
 var load []models.Product
 
 func ProductLoadingPage(c *gin.Context) {
-
 	if err := initializers.DB.Joins("Category").Find(&load); err.Error != nil {
 		c.JSON(http.StatusBadRequest, "Failed to fetch product data")
 		return

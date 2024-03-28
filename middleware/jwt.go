@@ -13,25 +13,24 @@ import (
 
 var SecretKey = []byte("secretkey")
 var UserDetails models.User
-var BlacklistedToken = make(map[string]bool)
 
 type customClaims struct {
-	UserID   uint    `json:"userid"`
+	UserID   uint   `json:"userid"`
 	Email    string `json:"email"`
 	Username string `json:"username"`
 	Role     string `json:"role"`
 	jwt.StandardClaims
 }
 
-func GenerateJwt(c *gin.Context, mail string, role string, userid uint) {
+func GenerateJwt(c *gin.Context, mail string, role string, userid uint) string {
 	fmt.Println("mail===>", mail, "role===>", role, "userid===>", userid)
 	tokenkey, err := CreateToken(mail, role, userid)
 	if err != nil {
 		fmt.Println("failed to create token")
-		return
+		return ""
 	}
-	c.JSON(200, gin.H{"token": tokenkey})
 	fmt.Println("session check======>", tokenkey)
+	return tokenkey
 
 }
 func CreateToken(mail string, role string, userid uint) (string, error) {
@@ -53,14 +52,9 @@ func CreateToken(mail string, role string, userid uint) (string, error) {
 func JwtMiddleware(role string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		UserDetails = models.User{}
-		tokenString := c.GetHeader("Authorization")
+		tokenString,_ := c.Cookie("jwtToken")
 		if tokenString == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token not found"})
-			c.Abort()
-			return
-		}
-		if BlacklistedToken[tokenString] {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token Removed"})
 			c.Abort()
 			return
 		}
@@ -70,7 +64,7 @@ func JwtMiddleware(role string) gin.HandlerFunc {
 		})
 		if err != nil || !token.Valid {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Token"})
-			fmt.Println("invalid token=========>",err)
+			fmt.Println("invalid token=========>", err)
 			c.Abort()
 			return
 		}

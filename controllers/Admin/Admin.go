@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"ecom/initializers"
-	"ecom/middleware"
 	"ecom/models"
 	"fmt"
 	"net/http"
@@ -12,6 +11,7 @@ import (
 
 // =============================== Admin login & logout ========================
 var Adminrole = "admin"
+
 func Login(c *gin.Context) {
 	var log models.Admin
 	var admin models.Admin
@@ -25,8 +25,9 @@ func Login(c *gin.Context) {
 
 	if log.Email == admin.Email && log.Password == admin.Password {
 		adminID := admin.ID
-		fmt.Println("==========>", admin.Email, admin.Password, adminID,"<=============")
-		middleware.GenerateJwt(c, log.Email, Adminrole, adminID)
+		fmt.Println("==========>", admin.Email, admin.Password, adminID, "<=============")
+		// token := middleware.GenerateJwt(c, log.Email, Adminrole, adminID)
+		// c.SetCookie("jwtToken1", token, int((time.Hour * 1).Seconds()), "/", "localhost", false, true)
 		c.JSON(http.StatusOK, gin.H{
 			"message": "Login successful",
 		})
@@ -37,12 +38,8 @@ func Login(c *gin.Context) {
 	}
 }
 func Admin_Logout(c *gin.Context) {
-	tokenString := c.GetHeader("Authorization")
-	if tokenString == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Token not found"})
-		return
-	}
-	middleware.BlacklistedToken[tokenString] = true
+
+	c.SetCookie("jwtToken", "", -1, "", "", false, false)
 	c.JSON(200, gin.H{"message": "Logout succesful"})
 }
 

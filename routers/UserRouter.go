@@ -15,7 +15,7 @@ func UserGroup(r *gin.RouterGroup) {
 	//=========================== User sign up, Login & Logout =============================
 
 	r.POST("/user/registration", controllers.Usersignup)
-	r.POST("/user/signin", controllers.Userlogin)
+	r.GET("/user/signin", controllers.Userlogin)
 	r.POST("/forgotpass/sendOTP", controllers.ForgotPassword_OTP)
 	r.POST("/forgotpass/checkOTP", controllers.Forgot_Pass_OTP_Check)
 	r.POST("/forgotPassword", controllers.ForgotPassword_Change)
@@ -28,8 +28,8 @@ func UserGroup(r *gin.RouterGroup) {
 
 	//========================= User product management ========================================
 
-	r.GET("/products", middleware.JwtMiddleware(Roleuser), handlers.ProductLoadingPage)
-	r.GET("/products/details/:ID", middleware.JwtMiddleware(Roleuser), handlers.ProductDetails)
+	r.GET("/products", handlers.ProductLoadingPage)
+	r.GET("/products/details/:ID", handlers.ProductDetails)
 	r.POST("/products/rating", middleware.JwtMiddleware(Roleuser), handlers.RatingStrore)
 	r.POST("/products/review", middleware.JwtMiddleware(Roleuser), handlers.ReviewStore)
 
@@ -75,6 +75,9 @@ func UserGroup(r *gin.RouterGroup) {
 	//=============================== Payment Gateway ========================================
 	r.GET("/payment", Paymentgateways.PaymentTemplate)
 	r.POST("/payment/submit", Paymentgateways.PaymentDetailsFromFrontend)
+
+	//=============================== Payment Invoice ========================================
+	r.GET("/Invoice/:ID",middleware.JwtMiddleware(Roleuser),handlers.PymentInvoice)
 
 	// ================================== END ===================================================
 }

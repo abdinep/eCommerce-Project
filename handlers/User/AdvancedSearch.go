@@ -53,9 +53,9 @@ func SeaechProduct(c *gin.Context) {
 
 		for _, v := range products {
 			c.JSON(200, gin.H{
-				"Name":     v.Product_Name,
-				"Price":    v.Price,
-				"ID":       v.ID,
+				"Name":  v.Product_Name,
+				"Price": v.Price,
+				"ID":    v.ID,
 			})
 		}
 		return

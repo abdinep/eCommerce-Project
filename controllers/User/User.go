@@ -24,6 +24,7 @@ var Roleuser = "user"
 func Userlogin(c *gin.Context) {
 	var form models.User
 	var table models.User
+	var token string
 	err := c.ShouldBindJSON(&form)
 	if err != nil {
 		c.JSON(501, "failed to bind json")
@@ -37,8 +38,13 @@ func Userlogin(c *gin.Context) {
 	} else {
 		if table.Status == "Active" {
 			fmt.Println("id======>", table.ID)
-			middleware.GenerateJwt(c, form.Email, Roleuser, table.ID)
-			c.JSON(200, "Welcome to Home page")
+			token = middleware.GenerateJwt(c, form.Email, Roleuser, table.ID)
+			fmt.Println("token----->", token)
+			c.SetCookie("jwtToken", token, int((time.Hour * 5).Seconds()), "/", "localhost", false, true)
+			c.JSON(200, gin.H{
+				"Message": "Welcome to Home page",
+				"Token":token,
+			})
 		} else {
 			c.JSON(200, "User Blocked")
 		}
@@ -48,15 +54,9 @@ func Userlogin(c *gin.Context) {
 //=============================== END ===============================================
 
 func User_Logout(c *gin.Context) {
-	tokenString := c.GetHeader("Authorization")
-	if tokenString == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Token not found"})
-		return
-	}
-	middleware.UserDetails = models.User{}
-	middleware.BlacklistedToken[tokenString] = true
-	c.JSON(200, gin.H{"message": "Logout succesful",
-		"blacklist": middleware.BlacklistedToken[tokenString]})
+
+	c.SetCookie("jwtToken", "", -1, "", "", false, false)
+	c.JSON(200, gin.H{"message": "Logout succesful"})
 }
 
 // ========================= Sending OTP by clicking Signup =========================
@@ -168,3 +168,32 @@ func Resend_Otp(c *gin.Context) {
 }
 
 //============================= END =====================================
+
+// func Login(c *gin.Context) {
+// 	user := models.User{}
+// 	var Find models.User
+// 	c.ShouldBindJSON(&user)
+// 	initializers.DB.First(&Find, "email=?", user.Email)
+
+// 	err := bcrypt.CompareHashAndPassword([]byte(Find.Password), []byte(user.Password))
+// 	if err != nil {
+// 		c.JSON(200, "Invalid Username or Password.")
+// 		return
+// 	}
+// 	if Find.Status == "Block" {
+// 		c.JSON(200, "User Blocked")
+// 		return
+// 	}
+
+// 	token := middleware.GenerateJwt(c, Find.Email, Roleuser, Find.ID)
+// 	if err != nil {
+// 		fmt.Println("TOken cant generate.")
+// 	}
+// 	c.SetCookie("accessToken", token, int((time.Hour * 24).Seconds()), "/", "localhost", false, true)
+// 	fmt.Println(token)
+// 	c.JSON(200, gin.H{
+// 		"messe": "successfully Login.",
+// 		"token": token,
+// 	})
+
+// }

@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/razorpay/razorpay-go"
@@ -39,6 +40,9 @@ func HandlePaymentSubmission(orderid int, amount int) (string, error) {
 	return razororderid, nil
 }
 func PaymentTemplate(c *gin.Context) {
+	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyaWQiOjEsImVtYWlsIjoiYWJkQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzExNjAyNjU4fQ.0HWfjGnoqXkhiHUKhQ1rYBtdQI4dJEciWuiU-lIhACg"
+	fmt.Println("token----->", token)
+	c.SetCookie("jwtToken", token, int((time.Hour * 1).Seconds()), "/", "localhost", false, true)
 	c.HTML(http.StatusOK, "Razorpay.html", gin.H{})
 }
 func PaymentDetailsFromFrontend(c *gin.Context) {
